@@ -327,6 +327,9 @@ The package name is `dsh-block-ptc`; the bundle patch resolves that same name.
 
 ### Contributing and support
 
+Join the [official community discussion](https://github.com/deepseek-ai/deepseek-harness/discussions/9754)
+for feedback on block boundaries and context/cache tradeoffs.
+
 Read [CONTRIBUTING.md](CONTRIBUTING.md), report bugs through
 [GitHub Issues](https://github.com/mengwEX/dsh-block-ptc/issues), and follow
 [SECURITY.md](SECURITY.md) for private vulnerability reports.

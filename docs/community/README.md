@@ -2,6 +2,9 @@
 
 ## Official forum / 官方论坛
 
+Published / 已发布：[Introduction #9754](https://github.com/deepseek-ai/deepseek-harness/discussions/9754),
+posted by `mengwEX` in **Show Your Plugins!** on 2026-10-15.
+
 - [Show Your Plugins!](https://github.com/deepseek-ai/deepseek-harness/discussions/categories/show-your-plugins)
 - [Plugin category guidelines](https://github.com/deepseek-ai/deepseek-harness/discussions/2004)
 - [Community guidelines](https://github.com/deepseek-ai/deepseek-harness/discussions/1797)

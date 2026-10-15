@@ -258,6 +258,9 @@ GitHub 版本发布与 npm 发布流程见 [RELEASING.md](RELEASING.md)。包名
 
 ### 贡献与反馈
 
+欢迎在[官方社区介绍帖](https://github.com/deepseek-ai/deepseek-harness/discussions/9754)
+交流区块收口与上下文、缓存之间的取舍。
+
 贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，问题反馈请使用
 [GitHub Issues](https://github.com/mengwEX/dsh-block-ptc/issues)；安全漏洞请按
 [SECURITY.md](SECURITY.md) 私下报告。欢迎使用中文或英文。
