@@ -1,0 +1,218 @@
+{
+  "kind": "illustrative-not-measured",
+  "description": "Same synthetic four-task conversation, two independent ideal prefix caches. Actual replacement planning uses the plugin. Token weights are assigned, not tokenized.",
+  "assumptions": [
+    "Equal 4096-token fixed prefix in both presets; wrapper/schema/prompt overhead is normalized away.",
+    "Four tasks, three requests per task; each new user instruction weighs 256 tokens; each completed assistant/tool pair weighs 2048.",
+    "Each summary weighs 512 tokens; compaction happens inside requests 3, 6, 9 and 12, without an extra request. User instructions and the closing in-flight pair remain.",
+    "Baseline is append-only PTC before its automatic compaction threshold is reached, not a comparison against every DSH compaction strategy.",
+    "Ideal independent cache per arm: longest unchanged input prefix from earlier inputs, rounded down to 64-token units. No retention misses, cache build delay or contention.",
+    "These are synthetic inputs and modeled cache hits, not real provider usage, speed, cost, quality or savings measurements."
+  ],
+  "config": {
+    "requests": 12,
+    "requestsPerBlock": 3,
+    "systemTokens": 4096,
+    "userTokens": 256,
+    "assistantTokens": 96,
+    "toolResultTokens": 1952,
+    "summaryTokens": 512,
+    "cacheUnit": 64
+  },
+  "baseline": [
+    {
+      "request": 1,
+      "block": 1,
+      "inputTokens": 4352,
+      "cacheHitTokens": 0,
+      "cacheMissTokens": 4352,
+      "afterSummary": false
+    },
+    {
+      "request": 2,
+      "block": 1,
+      "inputTokens": 6400,
+      "cacheHitTokens": 4352,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 3,
+      "block": 1,
+      "inputTokens": 8448,
+      "cacheHitTokens": 6400,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 4,
+      "block": 2,
+      "inputTokens": 10752,
+      "cacheHitTokens": 8448,
+      "cacheMissTokens": 2304,
+      "afterSummary": false
+    },
+    {
+      "request": 5,
+      "block": 2,
+      "inputTokens": 12800,
+      "cacheHitTokens": 10752,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 6,
+      "block": 2,
+      "inputTokens": 14848,
+      "cacheHitTokens": 12800,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 7,
+      "block": 3,
+      "inputTokens": 17152,
+      "cacheHitTokens": 14848,
+      "cacheMissTokens": 2304,
+      "afterSummary": false
+    },
+    {
+      "request": 8,
+      "block": 3,
+      "inputTokens": 19200,
+      "cacheHitTokens": 17152,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 9,
+      "block": 3,
+      "inputTokens": 21248,
+      "cacheHitTokens": 19200,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 10,
+      "block": 4,
+      "inputTokens": 23552,
+      "cacheHitTokens": 21248,
+      "cacheMissTokens": 2304,
+      "afterSummary": false
+    },
+    {
+      "request": 11,
+      "block": 4,
+      "inputTokens": 25600,
+      "cacheHitTokens": 23552,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 12,
+      "block": 4,
+      "inputTokens": 27648,
+      "cacheHitTokens": 25600,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    }
+  ],
+  "blockPtc": [
+    {
+      "request": 1,
+      "block": 1,
+      "inputTokens": 4352,
+      "cacheHitTokens": 0,
+      "cacheMissTokens": 4352,
+      "afterSummary": false
+    },
+    {
+      "request": 2,
+      "block": 1,
+      "inputTokens": 6400,
+      "cacheHitTokens": 4352,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 3,
+      "block": 1,
+      "inputTokens": 8448,
+      "cacheHitTokens": 6400,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 4,
+      "block": 2,
+      "inputTokens": 7168,
+      "cacheHitTokens": 4352,
+      "cacheMissTokens": 2816,
+      "afterSummary": true
+    },
+    {
+      "request": 5,
+      "block": 2,
+      "inputTokens": 9216,
+      "cacheHitTokens": 7168,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 6,
+      "block": 2,
+      "inputTokens": 11264,
+      "cacheHitTokens": 9216,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 7,
+      "block": 3,
+      "inputTokens": 9984,
+      "cacheHitTokens": 7168,
+      "cacheMissTokens": 2816,
+      "afterSummary": true
+    },
+    {
+      "request": 8,
+      "block": 3,
+      "inputTokens": 12032,
+      "cacheHitTokens": 9984,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 9,
+      "block": 3,
+      "inputTokens": 14080,
+      "cacheHitTokens": 12032,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 10,
+      "block": 4,
+      "inputTokens": 12800,
+      "cacheHitTokens": 9984,
+      "cacheMissTokens": 2816,
+      "afterSummary": true
+    },
+    {
+      "request": 11,
+      "block": 4,
+      "inputTokens": 14848,
+      "cacheHitTokens": 12800,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 12,
+      "block": 4,
+      "inputTokens": 16896,
+      "cacheHitTokens": 14848,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    }
+  ]
+}

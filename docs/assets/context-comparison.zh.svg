@@ -1,0 +1,894 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1224pt" height="633.6pt" viewBox="0 0 1224 633.6" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.9.4, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 633.6
+L 1224 633.6
+L 1224 0
+L 0 0
+z
+" style="fill: #f6f8fc"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 85.68 449.856
+L 616.08 449.856
+L 616.08 190.08
+L 85.68 190.08
+z
+" style="fill: #f6f8fc"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 222.557419 449.856
+L 222.557419 190.08
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #dce4ef"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 350.88 449.856
+L 350.88 190.08
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #dce4ef"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 479.202581 449.856
+L 479.202581 190.08
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #dce4ef"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_4"/>
+     <g id="text_1">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="115.621935" y="465.515375" transform="rotate(-0 115.621935 465.515375)">R1</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_5"/>
+     <g id="text_2">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="158.396129" y="465.515375" transform="rotate(-0 158.396129 465.515375)">R2</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_6"/>
+     <g id="text_3">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="201.170323" y="465.515375" transform="rotate(-0 201.170323 465.515375)">R3</text>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_7"/>
+     <g id="text_4">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="243.944516" y="465.515375" transform="rotate(-0 243.944516 465.515375)">R4</text>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_8"/>
+     <g id="text_5">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="286.71871" y="465.515375" transform="rotate(-0 286.71871 465.515375)">R5</text>
+     </g>
+    </g>
+    <g id="xtick_6">
+     <g id="line2d_9"/>
+     <g id="text_6">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="329.492903" y="465.515375" transform="rotate(-0 329.492903 465.515375)">R6</text>
+     </g>
+    </g>
+    <g id="xtick_7">
+     <g id="line2d_10"/>
+     <g id="text_7">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="372.267097" y="465.515375" transform="rotate(-0 372.267097 465.515375)">R7</text>
+     </g>
+    </g>
+    <g id="xtick_8">
+     <g id="line2d_11"/>
+     <g id="text_8">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="415.04129" y="465.515375" transform="rotate(-0 415.04129 465.515375)">R8</text>
+     </g>
+    </g>
+    <g id="xtick_9">
+     <g id="line2d_12"/>
+     <g id="text_9">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="457.815484" y="465.515375" transform="rotate(-0 457.815484 465.515375)">R9</text>
+     </g>
+    </g>
+    <g id="xtick_10">
+     <g id="line2d_13"/>
+     <g id="text_10">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="500.589677" y="465.515375" transform="rotate(-0 500.589677 465.515375)">R10</text>
+     </g>
+    </g>
+    <g id="xtick_11">
+     <g id="line2d_14"/>
+     <g id="text_11">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="543.363871" y="465.515375" transform="rotate(-0 543.363871 465.515375)">R11</text>
+     </g>
+    </g>
+    <g id="xtick_12">
+     <g id="line2d_15"/>
+     <g id="text_12">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="586.138065" y="465.515375" transform="rotate(-0 586.138065 465.515375)">R12</text>
+     </g>
+    </g>
+    <g id="text_13">
+     <text style="fill: #57697e; font: 11px 'Hiragino Sans GB'; text-anchor: middle" x="350.88" y="487.981313" transform="rotate(-0 350.88 487.981313)">同一段模拟对话中的请求序号</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_16">
+      <path d="M 85.68 449.856
+L 616.08 449.856
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_17"/>
+     <g id="text_14">
+      <text style="fill: #57697e; font: 12px 'Hiragino Sans GB'; text-anchor: end" x="77.68" y="454.451625" transform="rotate(-0 77.68 454.451625)">0</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_18">
+      <path d="M 85.68 384.912
+L 616.08 384.912
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_19"/>
+     <g id="text_15">
+      <text style="fill: #57697e; font: 12px 'Hiragino Sans GB'; text-anchor: end" x="77.68" y="389.507625" transform="rotate(-0 77.68 389.507625)">8</text>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_20">
+      <path d="M 85.68 319.968
+L 616.08 319.968
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_21"/>
+     <g id="text_16">
+      <text style="fill: #57697e; font: 12px 'Hiragino Sans GB'; text-anchor: end" x="77.68" y="324.563625" transform="rotate(-0 77.68 324.563625)">16</text>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_22">
+      <path d="M 85.68 255.024
+L 616.08 255.024
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_23"/>
+     <g id="text_17">
+      <text style="fill: #57697e; font: 12px 'Hiragino Sans GB'; text-anchor: end" x="77.68" y="259.619625" transform="rotate(-0 77.68 259.619625)">24</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_24">
+      <path d="M 85.68 190.08
+L 616.08 190.08
+" clip-path="url(#p7a2f4b6ce1)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_25"/>
+     <g id="text_18">
+      <text style="fill: #57697e; font: 12px 'Hiragino Sans GB'; text-anchor: end" x="77.68" y="194.675625" transform="rotate(-0 77.68 194.675625)">32</text>
+     </g>
+    </g>
+    <g id="text_19">
+     <text style="fill: #57697e; font: 11px 'Hiragino Sans GB'; text-anchor: middle" x="49.619688" y="319.968" transform="rotate(-90 49.619688 319.968)">输入上下文（千个示意 token）</text>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 101.07871 449.856
+L 130.165161 449.856
+L 130.165161 449.856
+L 101.07871 449.856
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 143.852903 449.856
+L 172.939355 449.856
+L 172.939355 414.526464
+L 143.852903 414.526464
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 186.627097 449.856
+L 215.713548 449.856
+L 215.713548 397.9008
+L 186.627097 397.9008
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 229.40129 449.856
+L 258.487742 449.856
+L 258.487742 381.275136
+L 229.40129 381.275136
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 272.175484 449.856
+L 301.261935 449.856
+L 301.261935 362.571264
+L 272.175484 362.571264
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 314.949677 449.856
+L 344.036129 449.856
+L 344.036129 345.9456
+L 314.949677 345.9456
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 357.723871 449.856
+L 386.810323 449.856
+L 386.810323 329.319936
+L 357.723871 329.319936
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 400.498065 449.856
+L 429.584516 449.856
+L 429.584516 310.616064
+L 400.498065 310.616064
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 443.272258 449.856
+L 472.35871 449.856
+L 472.35871 293.9904
+L 443.272258 293.9904
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 486.046452 449.856
+L 515.132903 449.856
+L 515.132903 277.364736
+L 486.046452 277.364736
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 528.820645 449.856
+L 557.907097 449.856
+L 557.907097 258.660864
+L 528.820645 258.660864
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 571.594839 449.856
+L 600.68129 449.856
+L 600.68129 242.0352
+L 571.594839 242.0352
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_15">
+    <path d="M 101.07871 449.856
+L 130.165161 449.856
+L 130.165161 414.526464
+L 101.07871 414.526464
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_16">
+    <path d="M 143.852903 414.526464
+L 172.939355 414.526464
+L 172.939355 397.9008
+L 143.852903 397.9008
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 186.627097 397.9008
+L 215.713548 397.9008
+L 215.713548 381.275136
+L 186.627097 381.275136
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_18">
+    <path d="M 229.40129 381.275136
+L 258.487742 381.275136
+L 258.487742 362.571264
+L 229.40129 362.571264
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_19">
+    <path d="M 272.175484 362.571264
+L 301.261935 362.571264
+L 301.261935 345.9456
+L 272.175484 345.9456
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_20">
+    <path d="M 314.949677 345.9456
+L 344.036129 345.9456
+L 344.036129 329.319936
+L 314.949677 329.319936
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_21">
+    <path d="M 357.723871 329.319936
+L 386.810323 329.319936
+L 386.810323 310.616064
+L 357.723871 310.616064
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_22">
+    <path d="M 400.498065 310.616064
+L 429.584516 310.616064
+L 429.584516 293.9904
+L 400.498065 293.9904
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_23">
+    <path d="M 443.272258 293.9904
+L 472.35871 293.9904
+L 472.35871 277.364736
+L 443.272258 277.364736
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_24">
+    <path d="M 486.046452 277.364736
+L 515.132903 277.364736
+L 515.132903 258.660864
+L 486.046452 258.660864
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_25">
+    <path d="M 528.820645 258.660864
+L 557.907097 258.660864
+L 557.907097 242.0352
+L 528.820645 242.0352
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_26">
+    <path d="M 571.594839 242.0352
+L 600.68129 242.0352
+L 600.68129 225.409536
+L 571.594839 225.409536
+z
+" clip-path="url(#p7a2f4b6ce1)" style="fill: #eaa45b"/>
+   </g>
+   <g id="text_20">
+    <text style="fill: #14263d; font: 700 16px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="158.90688" transform="rotate(-0 85.68 158.90688)">原生 PTC — 历史持续累积</text>
+   </g>
+   <g id="text_21">
+    <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="179.68896" transform="rotate(-0 85.68 179.68896)">本示例尚未触发内置自动压缩阈值</text>
+   </g>
+   <g id="text_22">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="115.621935" y="411.116904" transform="rotate(-0 115.621935 411.116904)">4.4</text>
+   </g>
+   <g id="text_23">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="158.396129" y="394.49124" transform="rotate(-0 158.396129 394.49124)">6.4</text>
+   </g>
+   <g id="text_24">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="201.170323" y="377.865576" transform="rotate(-0 201.170323 377.865576)">8.4</text>
+   </g>
+   <g id="text_25">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="243.944516" y="359.161704" transform="rotate(-0 243.944516 359.161704)">10.8</text>
+   </g>
+   <g id="text_26">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="286.71871" y="342.53604" transform="rotate(-0 286.71871 342.53604)">12.8</text>
+   </g>
+   <g id="text_27">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="329.492903" y="325.910376" transform="rotate(-0 329.492903 325.910376)">14.8</text>
+   </g>
+   <g id="text_28">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="372.267097" y="307.206504" transform="rotate(-0 372.267097 307.206504)">17.2</text>
+   </g>
+   <g id="text_29">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="415.04129" y="290.58084" transform="rotate(-0 415.04129 290.58084)">19.2</text>
+   </g>
+   <g id="text_30">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="457.815484" y="273.955176" transform="rotate(-0 457.815484 273.955176)">21.2</text>
+   </g>
+   <g id="text_31">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="500.589677" y="255.251304" transform="rotate(-0 500.589677 255.251304)">23.6</text>
+   </g>
+   <g id="text_32">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="543.363871" y="238.62564" transform="rotate(-0 543.363871 238.62564)">25.6</text>
+   </g>
+   <g id="text_33">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="586.138065" y="221.999976" transform="rotate(-0 586.138065 221.999976)">27.6</text>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="patch_27">
+    <path d="M 669.12 449.856
+L 1199.52 449.856
+L 1199.52 190.08
+L 669.12 190.08
+z
+" style="fill: #f6f8fc"/>
+   </g>
+   <g id="line2d_26">
+    <path d="M 805.997419 449.856
+L 805.997419 190.08
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #dce4ef"/>
+   </g>
+   <g id="line2d_27">
+    <path d="M 934.32 449.856
+L 934.32 190.08
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #dce4ef"/>
+   </g>
+   <g id="line2d_28">
+    <path d="M 1062.642581 449.856
+L 1062.642581 190.08
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #dce4ef"/>
+   </g>
+   <g id="matplotlib.axis_3">
+    <g id="xtick_13">
+     <g id="line2d_29"/>
+     <g id="text_34">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="699.061935" y="465.515375" transform="rotate(-0 699.061935 465.515375)">R1</text>
+     </g>
+    </g>
+    <g id="xtick_14">
+     <g id="line2d_30"/>
+     <g id="text_35">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="741.836129" y="465.515375" transform="rotate(-0 741.836129 465.515375)">R2</text>
+     </g>
+    </g>
+    <g id="xtick_15">
+     <g id="line2d_31"/>
+     <g id="text_36">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="784.610323" y="465.515375" transform="rotate(-0 784.610323 465.515375)">R3</text>
+     </g>
+    </g>
+    <g id="xtick_16">
+     <g id="line2d_32"/>
+     <g id="text_37">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="827.384516" y="465.515375" transform="rotate(-0 827.384516 465.515375)">R4</text>
+     </g>
+    </g>
+    <g id="xtick_17">
+     <g id="line2d_33"/>
+     <g id="text_38">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="870.15871" y="465.515375" transform="rotate(-0 870.15871 465.515375)">R5</text>
+     </g>
+    </g>
+    <g id="xtick_18">
+     <g id="line2d_34"/>
+     <g id="text_39">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="912.932903" y="465.515375" transform="rotate(-0 912.932903 465.515375)">R6</text>
+     </g>
+    </g>
+    <g id="xtick_19">
+     <g id="line2d_35"/>
+     <g id="text_40">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="955.707097" y="465.515375" transform="rotate(-0 955.707097 465.515375)">R7</text>
+     </g>
+    </g>
+    <g id="xtick_20">
+     <g id="line2d_36"/>
+     <g id="text_41">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="998.48129" y="465.515375" transform="rotate(-0 998.48129 465.515375)">R8</text>
+     </g>
+    </g>
+    <g id="xtick_21">
+     <g id="line2d_37"/>
+     <g id="text_42">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="1041.255484" y="465.515375" transform="rotate(-0 1041.255484 465.515375)">R9</text>
+     </g>
+    </g>
+    <g id="xtick_22">
+     <g id="line2d_38"/>
+     <g id="text_43">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="1084.029677" y="465.515375" transform="rotate(-0 1084.029677 465.515375)">R10</text>
+     </g>
+    </g>
+    <g id="xtick_23">
+     <g id="line2d_39"/>
+     <g id="text_44">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="1126.803871" y="465.515375" transform="rotate(-0 1126.803871 465.515375)">R11</text>
+     </g>
+    </g>
+    <g id="xtick_24">
+     <g id="line2d_40"/>
+     <g id="text_45">
+      <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="1169.578065" y="465.515375" transform="rotate(-0 1169.578065 465.515375)">R12</text>
+     </g>
+    </g>
+    <g id="text_46">
+     <text style="fill: #57697e; font: 11px 'Hiragino Sans GB'; text-anchor: middle" x="934.32" y="487.981313" transform="rotate(-0 934.32 487.981313)">同一段模拟对话中的请求序号</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_4">
+    <g id="ytick_6">
+     <g id="line2d_41">
+      <path d="M 669.12 449.856
+L 1199.52 449.856
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_42"/>
+    </g>
+    <g id="ytick_7">
+     <g id="line2d_43">
+      <path d="M 669.12 384.912
+L 1199.52 384.912
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_44"/>
+    </g>
+    <g id="ytick_8">
+     <g id="line2d_45">
+      <path d="M 669.12 319.968
+L 1199.52 319.968
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_46"/>
+    </g>
+    <g id="ytick_9">
+     <g id="line2d_47">
+      <path d="M 669.12 255.024
+L 1199.52 255.024
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_48"/>
+    </g>
+    <g id="ytick_10">
+     <g id="line2d_49">
+      <path d="M 669.12 190.08
+L 1199.52 190.08
+" clip-path="url(#p4a472d3b27)" style="fill: none; stroke: #dce4ef; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_50"/>
+    </g>
+   </g>
+   <g id="patch_28">
+    <path d="M 684.51871 449.856
+L 713.605161 449.856
+L 713.605161 449.856
+L 684.51871 449.856
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_29">
+    <path d="M 727.292903 449.856
+L 756.379355 449.856
+L 756.379355 414.526464
+L 727.292903 414.526464
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_30">
+    <path d="M 770.067097 449.856
+L 799.153548 449.856
+L 799.153548 397.9008
+L 770.067097 397.9008
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_31">
+    <path d="M 812.84129 449.856
+L 841.927742 449.856
+L 841.927742 414.526464
+L 812.84129 414.526464
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_32">
+    <path d="M 855.615484 449.856
+L 884.701935 449.856
+L 884.701935 391.666176
+L 855.615484 391.666176
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_33">
+    <path d="M 898.389677 449.856
+L 927.476129 449.856
+L 927.476129 375.040512
+L 898.389677 375.040512
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_34">
+    <path d="M 941.163871 449.856
+L 970.250323 449.856
+L 970.250323 391.666176
+L 941.163871 391.666176
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_35">
+    <path d="M 983.938065 449.856
+L 1013.024516 449.856
+L 1013.024516 368.805888
+L 983.938065 368.805888
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_36">
+    <path d="M 1026.712258 449.856
+L 1055.79871 449.856
+L 1055.79871 352.180224
+L 1026.712258 352.180224
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_37">
+    <path d="M 1069.486452 449.856
+L 1098.572903 449.856
+L 1098.572903 368.805888
+L 1069.486452 368.805888
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_38">
+    <path d="M 1112.260645 449.856
+L 1141.347097 449.856
+L 1141.347097 345.9456
+L 1112.260645 345.9456
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_39">
+    <path d="M 1155.034839 449.856
+L 1184.12129 449.856
+L 1184.12129 329.319936
+L 1155.034839 329.319936
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
+   </g>
+   <g id="patch_40">
+    <path d="M 684.51871 449.856
+L 713.605161 449.856
+L 713.605161 414.526464
+L 684.51871 414.526464
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_41">
+    <path d="M 727.292903 414.526464
+L 756.379355 414.526464
+L 756.379355 397.9008
+L 727.292903 397.9008
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_42">
+    <path d="M 770.067097 397.9008
+L 799.153548 397.9008
+L 799.153548 381.275136
+L 770.067097 381.275136
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_43">
+    <path d="M 812.84129 414.526464
+L 841.927742 414.526464
+L 841.927742 391.666176
+L 812.84129 391.666176
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_44">
+    <path d="M 855.615484 391.666176
+L 884.701935 391.666176
+L 884.701935 375.040512
+L 855.615484 375.040512
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_45">
+    <path d="M 898.389677 375.040512
+L 927.476129 375.040512
+L 927.476129 358.414848
+L 898.389677 358.414848
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_46">
+    <path d="M 941.163871 391.666176
+L 970.250323 391.666176
+L 970.250323 368.805888
+L 941.163871 368.805888
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_47">
+    <path d="M 983.938065 368.805888
+L 1013.024516 368.805888
+L 1013.024516 352.180224
+L 983.938065 352.180224
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_48">
+    <path d="M 1026.712258 352.180224
+L 1055.79871 352.180224
+L 1055.79871 335.55456
+L 1026.712258 335.55456
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_49">
+    <path d="M 1069.486452 368.805888
+L 1098.572903 368.805888
+L 1098.572903 345.9456
+L 1069.486452 345.9456
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_50">
+    <path d="M 1112.260645 345.9456
+L 1141.347097 345.9456
+L 1141.347097 329.319936
+L 1112.260645 329.319936
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="patch_51">
+    <path d="M 1155.034839 329.319936
+L 1184.12129 329.319936
+L 1184.12129 312.694272
+L 1155.034839 312.694272
+z
+" clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
+   </g>
+   <g id="text_47">
+    <text style="fill: #14263d; font: 700 16px 'Hiragino Sans GB'; text-anchor: start" x="669.12" y="158.90688" transform="rotate(-0 669.12 158.90688)">Block PTC — 按已完成区块收口</text>
+   </g>
+   <g id="text_48">
+    <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="669.12" y="179.68896" transform="rotate(-0 669.12 179.68896)">R3、R6、R9 内提交摘要，下一次请求看到替换结果</text>
+   </g>
+   <g id="text_49">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="699.061935" y="411.116904" transform="rotate(-0 699.061935 411.116904)">4.4</text>
+   </g>
+   <g id="text_50">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="741.836129" y="394.49124" transform="rotate(-0 741.836129 394.49124)">6.4</text>
+   </g>
+   <g id="text_51">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="784.610323" y="377.865576" transform="rotate(-0 784.610323 377.865576)">8.4</text>
+   </g>
+   <g id="text_52">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="827.384516" y="388.256616" transform="rotate(-0 827.384516 388.256616)">7.2</text>
+   </g>
+   <g id="text_53">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="870.15871" y="371.630952" transform="rotate(-0 870.15871 371.630952)">9.2</text>
+   </g>
+   <g id="text_54">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="912.932903" y="355.005288" transform="rotate(-0 912.932903 355.005288)">11.3</text>
+   </g>
+   <g id="text_55">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="955.707097" y="365.396328" transform="rotate(-0 955.707097 365.396328)">10.0</text>
+   </g>
+   <g id="text_56">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="998.48129" y="348.770664" transform="rotate(-0 998.48129 348.770664)">12.0</text>
+   </g>
+   <g id="text_57">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1041.255484" y="332.145" transform="rotate(-0 1041.255484 332.145)">14.1</text>
+   </g>
+   <g id="text_58">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1084.029677" y="342.53604" transform="rotate(-0 1084.029677 342.53604)">12.8</text>
+   </g>
+   <g id="text_59">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1126.803871" y="325.910376" transform="rotate(-0 1126.803871 325.910376)">14.8</text>
+   </g>
+   <g id="text_60">
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1169.578065" y="309.284712" transform="rotate(-0 1169.578065 309.284712)">16.9</text>
+   </g>
+   <g id="patch_52">
+    <path d="M 833.309127 277.29895
+Q 830.402238 329.6289 827.569762 380.619274
+" style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 829.788538 376.736358
+L 827.569762 380.619274
+L 825.794695 376.514503
+" style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="text_61">
+    <text style="fill: #008574; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="833.800645" y="271.26" transform="rotate(-0 833.800645 271.26)">前缀重建</text>
+   </g>
+   <g id="patch_53">
+    <path d="M 961.510439 277.298716
+Q 958.677927 318.197657 955.93811 357.758162
+" style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 958.209694 353.905903
+L 955.93811 357.758162
+L 954.219253 353.629539
+" style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="text_62">
+    <text style="fill: #008574; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="962.123226" y="271.26" transform="rotate(-0 962.123226 271.26)">前缀重建</text>
+   </g>
+   <g id="patch_54">
+    <path d="M 1089.632421 277.297135
+Q 1086.922525 306.770415 1084.335466 334.90769
+" style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 1086.693298 331.107607
+L 1084.335466 334.90769
+L 1082.710099 330.741375
+" style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="text_63">
+    <text style="fill: #008574; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="1090.445806" y="271.26" transform="rotate(-0 1090.445806 271.26)">前缀重建</text>
+   </g>
+  </g>
+  <g id="text_64">
+   <text style="fill: #008574; font: 700 11px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="34.848" transform="rotate(-0 85.68 34.848)">机制示意  /  人工指定 TOKEN 权重  /  非 API 实测</text>
+  </g>
+  <g id="text_65">
+   <text style="fill: #14263d; font: 700 23px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="70.3296" transform="rotate(-0 85.68 70.3296)">同一段对话：已完成的区块收口后，后续请求的上下文更小</text>
+  </g>
+  <g id="text_66">
+   <text style="fill: #57697e; font: 12px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="98.208" transform="rotate(-0 85.68 98.208)">12 次请求 · 4 个任务 · 每个任务 3 次请求 · 两组使用相同的用户指令与工具工作量</text>
+  </g>
+  <g id="text_67">
+   <text style="fill: #14263d; font: 11px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="517.0176" transform="rotate(-0 85.68 517.0176)">整根柱子 = 本次输入上下文。缓存命中的 token 仍占用上下文窗口。</text>
+  </g>
+  <g id="text_68">
+   <text style="fill: #57697e; font: 11px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="542.9952" transform="rotate(-0 85.68 542.9952)">改写历史可能使后面的缓存前缀失效：R4、R7、R10 明确画出了重新构建的部分。</text>
+  </g>
+  <g id="text_69">
+   <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="568.9728" transform="rotate(-0 85.68 568.9728)">固定前缀 4,096；每条用户消息 256；每对 assistant/tool 消息 2,048；每段摘要 512 token。</text>
+  </g>
+  <g id="text_70">
+   <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="594.9504" transform="rotate(-0 85.68 594.9504)">保留用户消息及收口时尚未完成的调用。缓存采用理想前缀模型，不代表实测费用、速度或质量。</text>
+  </g>
+  <g id="legend_1">
+   <g id="patch_55">
+    <path d="M 89.136 137.84085
+L 113.136 137.84085
+L 113.136 129.44085
+L 89.136 129.44085
+z
+" style="fill: #4463b3"/>
+   </g>
+   <g id="text_71">
+    <text style="font: 12px 'Hiragino Sans GB'; text-anchor: start" x="122.736" y="137.84085" transform="rotate(-0 122.736 137.84085)">模拟缓存命中 token</text>
+   </g>
+   <g id="patch_56">
+    <path d="M 256.30725 137.84085
+L 280.30725 137.84085
+L 280.30725 129.44085
+L 256.30725 129.44085
+z
+" style="fill: #eaa45b"/>
+   </g>
+   <g id="text_72">
+    <text style="font: 12px 'Hiragino Sans GB'; text-anchor: start" x="289.90725" y="137.84085" transform="rotate(-0 289.90725 137.84085)">模拟缓存未命中 token</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7a2f4b6ce1">
+   <rect x="85.68" y="190.08" width="530.4" height="259.776"/>
+  </clipPath>
+  <clipPath id="p4a472d3b27">
+   <rect x="669.12" y="190.08" width="530.4" height="259.776"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -22,6 +22,7 @@ human transcript keeps everything and replay stays deterministic.
 ## Table of contents
 
 - [Why](#why)
+- [Context and cache comparison](#context-and-cache-comparison)
 - [How it works](#how-it-works)
 - [Install](#install)
 - [Quick start](#quick-start)
@@ -43,6 +44,25 @@ This plugin lets the model draw that line itself: open a block, work inside it,
 and close it with a handover summary — so the context it keeps is the one it
 chose to keep. The summary costs no extra model request, because the model is
 already generating when it closes the block.
+
+## Context and cache comparison
+
+![Illustrative comparison of input context and modeled cache hits for the same synthetic conversation](docs/assets/context-comparison.en.png)
+
+**Mechanism illustration, not an API benchmark.** Both panels replay the same
+synthetic four-task workload with assigned token weights. Full bar = input
+context; blue = modeled cache hits, orange = modeled cache misses. Cached tokens
+still occupy the context window.
+
+After a block closes, the next request carries a summary in place of its
+completed work. Replacing history can also invalidate the cached suffix:
+**smaller context does not guarantee a higher cache-hit rate or a lower bill**.
+The closing in-flight assistant/tool pair and all user messages remain. The
+baseline here has not reached its built-in automatic compaction threshold.
+
+See the [data, assumptions and reproduction steps](docs/context-comparison/README.md).
+The real API fields needed for a measured version are documented there; the
+plugin's `tokensFreed` is not a provider cache-hit measurement.
 
 ## How it works
 
