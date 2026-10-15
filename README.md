@@ -14,7 +14,7 @@ block id, and when the block's work is finished the model hands in a summary
 own context. The original messages stay in the append-only session log, so the
 human transcript keeps everything and replay stays deterministic.
 
-- Targets DeepSeek Harness **0.2.0-rc.2**
+- DeepSeek Harness **0.2.0-rc.2 or newer**; no upper version bound
 - Community plugin maintained by [mengwEX](https://github.com/mengwEX)
 - **Zero runtime dependencies** — the plugin imports nothing but `node:crypto`
 - License: **MIT**
@@ -79,9 +79,10 @@ await tools.block_summary({ id, summary })    callable from inside a program
    ones. On top of that it records that this step belongs to block `id`.
    The first call with a new id opens the block; later calls continue it.
 2. While a block is open, every message the model produces belongs to it.
-3. `tools.block_summary({ id, summary })` closes it. The plugin takes the
-   surface nodes that belong to that block and appends **one** replacement
-   message carrying the model's summary at the same position.
+3. `tools.block_summary({ id, summary })` closes it. The plugin replaces the
+   first eligible contiguous span of completed messages with **one** summary
+   at the start of that span. System/user messages and in-flight tool pairs
+   remain; messages outside the replaced span also remain.
 4. A node that belongs to several blocks is only replaced once every one of
    those blocks has been summarized.
 
@@ -91,10 +92,20 @@ instead. In the Web UI the summary renders as a compaction checkpoint node.
 
 ## Install
 
-Requirements: DeepSeek Harness `0.2.0-rc.2` and its bundled runtime. The plugin
+Requirements: DeepSeek Harness `>=0.2.0-rc.2` and its bundled runtime, with
+Cordis `>=4.0.4`. Neither peer range has an upper version bound. The plugin
 is a profile **bundle**: installing it adds one row to `dsh.profile.bundles`
 and one new agent preset, `block-ptc`. It does not modify the shipped `ptc`
 preset.
+
+The version ranges allow newer hosts to load the plugin; they are not a record
+of completed compatibility checks. Earlier live verification used DSH
+`0.2.0-rc.2`; the current browser changes and newer hosts still await live
+acceptance. DSH's plugin loader includes prereleases when evaluating its peer
+ranges. The plugin checks the required tool/prompt methods before mounting and
+the session methods before summarizing, and reports missing capabilities.
+Method presence does not verify event semantics, preset configuration or browser
+rendering; these still need validation when the host changes.
 
 ### From npm (recommended)
 
@@ -185,17 +196,24 @@ tool is reached from inside a program, exactly like PTC mode.
 | `timeoutMs` | number | no | Elapsed execution budget for this program. |
 
 Returns the `run_code` result verbatim: `{ logs, result?, sandbox? }`,
-rendered exactly as PTC mode renders it.
+rendered exactly as PTC mode renders it. The browser half registers the call
+into DSH's keyed Tool view slot and draws the same `code` row the built-in gives
+`run_code` — the `Code` title, `[<block id>] <goal>` as the summary, and the
+program plus its output behind the row — with every `bash`/`read`/`write` card
+the program dispatches nested inside it.
 
 ### Callable `tools.block_summary`
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | string | yes | Block to close. |
-| `summary` | string | yes | The handover, written by the model: goal, what was done, decisions and reasons, exact paths, commands, identifiers, numbers, what is still open. |
+| `summary` | string | yes | Written by the model. Summarize all content for this block id and submit the summary to replace the original content. Retain necessary information, such as file paths, as needed. |
 
 Returns `{ replaced, tokensFreed }`, or `{ replaced: 0, tokensFreed: 0, note }`
-when there was nothing committed to replace yet. `tokensFreed` is the estimated
+when there was nothing committed to replace yet; no summary is inserted in that
+case. A successful summary is inserted at the start of the first eligible
+contiguous span, not necessarily the block's first message if that message is
+still protected. `tokensFreed` is the estimated
 price of the replaced messages, not net context savings; the replacement summary
 also consumes tokens.
 
@@ -217,6 +235,34 @@ The shipped `ptc` preset plus:
 hands the program to the built-in `run_code` through
 `ctx.tools.execute({ …, parent: exec.token })`. "Identical to PTC mode" is then
 true by construction rather than by careful copying.
+
+**Why the nested transport keeps the outer call id.** The PTC bridge parents
+every program sub-call at the id of the call that is executing it
+(`parentCallId: exec.callId`), and the conversation UI can only attach a
+sub-call to a call node it can see in the transcript. Giving the nested
+`run_code` a synthetic id such as `<callId>:blk:1` therefore named a parent
+that no node renders: the whole sub-call tree was projected away and the block
+card showed a bare tool row. Reusing the outer id reproduces PTC mode's topology
+exactly — `rootCallId = parentCallId = <callId>`, program sub-calls
+`<callId>:ptc:<n>` — so the `bash`/`read`/`write` cards a program dispatches
+render inside the block row just as they do in PTC mode.
+
+**Why the package ships a browser half.** DSH maps a wire tool name to its row
+inside `@deepseek-ai/dsh-client-ui-tool`, which knows `run_code` and nothing
+else; a Host-only tool therefore lands on the generic "Tool call" row. The
+registered keyed view (`tool.call.toolview`, key `block_run_code`) is the only
+supported way to give the call PTC's row. Its markup, CSS and icons are copies
+of the host row renamed under a `dbp-` prefix, because the client-plugin rules
+forbid importing Harness client packages as modules; `--dsw-alias-*` theme
+tokens are the only shared styling dependency.
+
+**Why the bundle patch also mounts a host-level anchor row.** DSH serves a
+package's client module only for packages that appear as host Loader entries
+(`dsh-client-modules` scans `ctx.loader.entries()`), and this plugin's
+functional row lives inside the `block-ptc` preset, which is a separate tree.
+The anchor row (`config.anchor: true`) exists so the package is a host entry; it
+registers nothing, because a host-level guard would deny direct tool calls in
+every other preset.
 
 **Why the compaction vocabulary.** A message can only disappear from the model's
 context through DSH's own surface-replacement mechanism, and a replacement must
@@ -254,12 +300,35 @@ to resolve depending on how the host links it. This plugin imports only
 ## Verification
 
 ```
+npm run check          # syntax + both tests
 node tests/logic.test.mjs
+node tests/client.test.mjs
 ```
 
-The test drives the real plugin entry with a fake context and fake sessions:
-tool registration, the guard, the nested `run_code` dispatch, the whole
-compaction transaction, and the failure path that still releases the lock.
+The logic test drives the real plugin entry with a fake context and fake
+sessions: tool registration, the guard, the nested `run_code` dispatch, the
+whole compaction transaction, the failure path that still releases the lock, and
+the discovery anchor that must register nothing. The client test loads
+`client/client.js` through a stubbed browser module table and renders the row
+for every lifecycle shape — preparation, a dispatched program, a settled result,
+a failure, an interruption, and a malformed argument payload — because a keyed
+view that throws blanks its slot entry.
+
+Live verification of the row (the browser half is not covered by the unit tests):
+
+1. Install this checkout as a bundle. The desktop profile is managed by the
+   desktop app, so use its Plugin Manager with the absolute directory —
+   `plugin_manager install_bundle /absolute/path/to/dsh-block-ptc` — or the
+   plugin page's "package name or address" field, which accepts an absolute
+   local path.
+2. Restart the application: the Loader caches resolved modules and the client
+   module scan runs at boot.
+3. Open a new **Block PTC** session and run any program. The `block_run_code`
+   call should render as PTC's own code row, with the program's sub-calls nested
+   inside it.
+
+Known cosmetic difference from the built-in row: the running row has no shimmer
+sweep, and a DSH row redesign has to be copied here again.
 
 The original development notes record the following live desktop-profile
 validation on `0.2.0-rc.2` with the **Block PTC** preset. These are historical
@@ -299,8 +368,9 @@ The same transaction was replayed offline through the runtime's own
 - One block is summarized by one replacement, and one summary is one message —
   there is no second-level outline of summaries.
 - Blocks are per session. Sub-agents run their own context and their own blocks.
-- The plugin targets the exact DSH version in `peerDependencies`; bump it when
-  you move to a new runtime.
+- Peer dependencies declare minimum versions without an upper bound. Newer
+  hosts are allowed, but compatible event semantics, preset configuration and
+  browser APIs still need verification.
 
 ## Development
 

@@ -11,6 +11,16 @@
 #   * the `dsh-block-ptc` row registers `block_run_code`, `block_summary`, the
 #     direct-call guard and the block rules prompt section.
 - insert:
+    # Discovery anchor. A package's browser half (`dsh.client` + `./client`) is
+    # served only for packages that appear as host Loader entries, and this
+    # bundle's functional row lives inside the `block-ptc` preset below. This
+    # host row therefore carries `config.anchor`, which makes the Host half
+    # register nothing at host level; the Client module it unlocks is what the
+    # row exists for.
+    - id: dsh-block-ptc-anchor
+      name: 'dsh-block-ptc'
+      config:
+        anchor: true
     - id: preset-block-ptc
       name: '@deepseek-ai/dsh-agent-preset'
       config:

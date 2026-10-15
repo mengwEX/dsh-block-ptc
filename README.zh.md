@@ -10,7 +10,7 @@
 
 一个 *block* 就是一块黑板区域：AI 跑的每个程序都归属于一个 block id；这块活干完之后，AI 交上一段**自己写的**摘要，这段摘要会替换掉该 block 在**它自己上下文里**的那些消息。原始消息仍然留在只追加（append-only）的会话日志里，所以人的对话记录一条不少，回放也保持确定性。
 
-- 适配 DeepSeek Harness **0.2.0-rc.2**
+- 要求 DeepSeek Harness **0.2.0-rc.2 或更新版本**，不设版本上限
 - 由 [mengwEX](https://github.com/mengwEX) 维护的社区插件
 - **零运行时依赖** —— 插件除了 `node:crypto` 不 import 任何东西
 - 许可证：**MIT**
@@ -63,14 +63,20 @@ await tools.block_summary({ id, summary })    只能在程序内部调用
 
 1. `block_run_code` 把程序**原样交给内置的 PTC `run_code` 传输层**执行（嵌套派发），所以程序语义、`tools.*` SDK、子调用日志、沙箱、超时、结果渲染全是内置那套；它额外记下"这一步属于 block `id`"。同一个 id 第一次调用即开块，之后继续沿用。
 2. 块开着期间，AI 产生的每条消息都归属它。
-3. `tools.block_summary({ id, summary })` 收口：插件取出属于该 block 的会话节点，在**原位置**追加**一条**替换消息，内容就是 AI 写的那段摘要。
+3. `tools.block_summary({ id, summary })` 收口：插件用 AI 写的摘要替换第一段连续、已完成且可释放的消息，摘要位于该段起点。系统/用户消息、尚未完成的工具调用对及被替换段之外的消息仍保留。
 4. 一条消息若同时归属多个 block，要等这些 block **全部**收口后才会被替换。
 
 之后你会看到：对话记录里原来的每一轮都还在（日志只追加）；而 AI 的下一次请求里，它们已经变成那段摘要。Web UI 里这条摘要渲染成"压缩检查点"节点。
 
 ## 安装
 
-要求：DeepSeek Harness `0.2.0-rc.2` 及其自带运行时。本插件是一个 profile **bundle**：安装它会往 `dsh.profile.bundles` 加一行，并新增一个名为 `block-ptc` 的 agent preset；**不会改动自带的 `ptc` preset**。
+要求：DeepSeek Harness `>=0.2.0-rc.2` 及其自带运行时、Cordis `>=4.0.4`，均不设版本上限。本插件是一个 profile **bundle**：安装它会往 `dsh.profile.bundles` 加一行，并新增一个名为 `block-ptc` 的 agent preset；**不会改动自带的 `ptc` preset**。
+
+版本范围表示允许更新的宿主加载，不表示所有版本都已验收。此前真实宿主验证使用
+DSH `0.2.0-rc.2`；当前浏览器改动及更新宿主仍待实际验收。DSH 插件加载器判断
+peer 范围时包含预发布版本。插件在挂载前检查工具和提示词接口，在收口前检查
+会话接口，缺少接口时给出明确错误。接口存在不能证明事件语义、预设配置和浏览器
+渲染兼容，宿主升级后仍需验证这些行为。
 
 ### 从 npm 安装（推荐）
 
@@ -152,16 +158,18 @@ plugin_manager  remove_bundle  dsh-block-ptc
 | `code` | string | 是 | 程序主体；支持顶层 `await` 和 `return`，`return` 的值即结果。 |
 | `timeoutMs` | number | 否 | 本次程序的执行预算（毫秒）。 |
 
-返回值就是 `run_code` 的结果原样：`{ logs, result?, sandbox? }`，渲染方式与 PTC 模式完全一致。
+返回值就是 `run_code` 的结果原样：`{ logs, result?, sandbox? }`，渲染方式与 PTC 模式完全一致：浏览器半边把这次调用注册进 DSH 的键控 Tool 视图槽，画出与内置 `run_code` 相同的 `code` 行——标题「代码」、摘要 `[<block id>] <目标>`、展开后是程序原文与输出——程序里派发的每个 `bash`/`read`/`write` 卡片都嵌在这一行里。
 
 ### 可调用 `tools.block_summary`
 
 | 参数 | 类型 | 必填 | 含义 |
 |---|---|---|---|
 | `id` | string | 是 | 要收口的 block。 |
-| `summary` | string | 是 | 由 AI 撰写的交接内容：目标、做了什么、决策与理由、精确路径、命令、标识符与数值、尚未完成的部分。 |
+| `summary` | string | 是 | 由 AI 自己撰写。对该 block id 的所有内容进行总结整理，提交摘要替换原内容；文件路径等必要信息可按需保留。 |
 
 返回 `{ replaced, tokensFreed }`；若此刻还没有可替换的已提交内容，则返回 `{ replaced: 0, tokensFreed: 0, note }`。
+`replaced` 为零时不插入摘要。成功时摘要位于第一段连续可释放消息的起点；若 block
+首次出现的消息仍受保护，摘要不会占据那条消息的位置。
 `tokensFreed` 表示被替换消息的估算 token 数，不是净节省量；新摘要本身也占用 token。
 
 ### 预设 `block-ptc`
@@ -174,6 +182,12 @@ plugin_manager  remove_bundle  dsh-block-ptc
 ## 设计说明
 
 **为什么是委派而不是重写传输层。** `block_run_code` 通过 `ctx.tools.execute({ …, parent: exec.token })` 把程序交给内置 `run_code`。于是"与 PTC 模式一模一样"是**构造上成立**的，而不是靠小心抄写。
+
+**为什么嵌套传输层沿用外层的 call id。** PTC 桥给程序里每次子调用打的是"正在执行的那个调用的 id"（`parentCallId: exec.callId`），而会话界面只能把子调用挂到**它看得见的调用节点**上。所以给嵌套 `run_code` 造一个合成 id（如 `<callId>:blk:1`）等于指了一个没有任何节点渲染的父级：整棵子调用树会被投影掉，block 卡片只剩一行光秃秃的工具调用。沿用外层 id 就能**完全复刻 PTC 模式的拓扑**——`rootCallId = parentCallId = <callId>`，程序子调用为 `<callId>:ptc:<n>`——于是程序里派发的 `bash`/`read`/`write` 卡片会像 PTC 模式一样渲染在 block 行里面。
+
+**为什么包里带一个浏览器半边。** DSH 把"线协议工具名 → 那一行长什么样"硬编码在 `@deepseek-ai/dsh-client-ui-tool` 里，它只认识 `run_code`；纯 Host 插件因此只能落到通用的「工具调用」行。往 `tool.call.toolview` 注册键为 `block_run_code` 的视图，是官方支持的唯一办法。它的标记、CSS、图标都是宿主行代码的副本（类名前缀改成 `dbp-`）——因为客户端插件的规则不允许把 Harness 客户端包当模块 import；唯一共享的样式依赖是 `--dsw-alias-*` 主题变量。
+
+**为什么 bundle 补丁还挂了一条宿主层锚点行。** DSH 只为"以宿主 Loader 条目形式存在的包"提供客户端模块（`dsh-client-modules` 扫描的是 `ctx.loader.entries()`），而本插件的功能行挂在 `block-ptc` 预设里，预设是另一棵树。锚点行（`config.anchor: true`）的作用就是让这个包在宿主层有一个条目；它自己不注册任何东西——否则宿主层的 guard 会拒绝其它所有预设里的直接工具调用。
 
 **为什么用 compaction 那套词汇。** 一条消息想让模型看不见，只能走 DSH 自己的 surface 替换机制，而替换必须带上 DSH 要求的前后事件：
 
@@ -195,10 +209,20 @@ compaction/end          释放锁
 ## 验证
 
 ```
+npm run check          # 语法检查 + 两个测试
 node tests/logic.test.mjs
+node tests/client.test.mjs
 ```
 
-测试用假的 Cordis 上下文和假会话驱动**真实的插件入口**：工具注册、guard、嵌套 `run_code` 派发、完整的压缩事务，以及"失败也要释放锁"的路径。
+逻辑测试用假的 Cordis 上下文和假会话驱动**真实的插件入口**：工具注册、guard、嵌套 `run_code` 派发、完整的压缩事务、"失败也要释放锁"的路径，以及宿主层锚点行必须什么都不注册。客户端测试用打桩的浏览器模块表加载 `client/client.js`，把这一行在所有生命周期形态下渲染一遍——准备中、已派发、已结算、失败、被中断、参数不是合法 JSON——因为键控视图一旦抛错就会把那一个槽位清空。
+
+行的实机验证（浏览器半边不在单测覆盖范围内）：
+
+1. 把这个目录当 bundle 装进去。desktop profile 由桌面应用管理，所以用应用内的 Plugin Manager 装**绝对路径**：`plugin_manager install_bundle /absolute/path/to/dsh-block-ptc`，或直接在插件页「包名或地址」里填绝对路径。
+2. 重启应用：Loader 会缓存已解析的模块，客户端模块扫描只在启动时进行。
+3. 新建一个 **Block PTC** 会话跑一段程序。`block_run_code` 这次应该渲染成 PTC 自己的代码行，程序内部的子调用嵌在这一行里。
+
+与内置行已知的观感差异：运行中那一行没有 shimmer 扫光；DSH 若改版行样式，这里需要重新抄一遍。
 
 原始开发记录包含以下真实 desktop profile（`0.2.0-rc.2`）上的 **Block PTC**
 验证结果。这些是历史实测记录，仓库 CI 不会启动宿主重新执行端到端验证：
@@ -231,7 +255,7 @@ node tests/logic.test.mjs
 - 摘要按设计是有损的：AI 没写进去的东西，之后就从它的上下文里消失了。
 - 一个 block 一次替换、一段摘要一条消息，没有"摘要的摘要"这种二级提纲。
 - block 是会话级的；子代理有自己的上下文和自己的 block。
-- 插件按 `peerDependencies` 锁定确切的 DSH 版本；换运行时记得同步升级。
+- `peerDependencies` 只声明最低版本，不设上限；允许更新宿主加载，事件语义、预设配置与浏览器接口仍需验证。
 
 ## 开发
 

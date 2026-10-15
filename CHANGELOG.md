@@ -6,9 +6,56 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-10-15
+
+### Changed
+
+- Keep `block_run_code` on a single string `id`. Model-facing instructions
+  describe usage without prescribing how many
+  blocks may be open. Keep summary instructions focused on writing and submitting
+  the block's summary; remove replacement mechanics from the prompt, tool
+  descriptions and summary footer.
+- Replace exact DSH peer pins with `>=0.2.0-rc.2` and the Cordis peer range with
+  `>=4.0.4`, with no upper bounds. Document declared ranges separately from live
+  compatibility evidence.
+- Check required host methods before mounting and required session methods
+  before summarizing, with explicit errors for missing APIs.
+
+### Added
+
+- Browser half (`client/client.js`, declared through `dsh.client` and the
+  `./client` export): it registers the keyed `tool.call.toolview` entry for
+  `block_run_code` and renders PTC mode's own `code` row — the `Code` title,
+  `[<block id>] <goal>` as the summary, the program source and the result text
+  behind the disclosure. Its markup, CSS and icons are copies of the host row
+  renamed under a `dbp-` prefix, so `--dsw-alias-*` tokens are the only shared
+  styling dependency.
+- A host-level discovery anchor row in the bundle patch. DSH serves a package's
+  client module only for packages that appear as host Loader entries, and this
+  bundle's functional row lives inside the `block-ptc` preset (a separate tree).
+  The anchor carries `config.anchor: true` and registers nothing, so no guard
+  leaks into other presets.
+
+### Fixed
+
+- The nested `run_code` dispatch keeps the outer call id again, so a program's
+  sub-call tree renders inside the `block_run_code` row. The dispatch events the
+  PTC bridge writes carry `parentCallId = <the executing call's id>`, and the
+  conversation UI only attaches sub-calls to a call node present in the
+  transcript — a synthetic `<callId>:blk:1` parent was no such node, so every
+  `bash`/`read`/`write` card a program dispatched was projected away.
+
 ### Documentation
 
 - Make npm the recommended installation method after publishing `0.1.0`.
+
+### Validation
+
+- Local syntax checks and standalone host/client tests pass. The client tests
+  use a stubbed React/slot runtime; browser loading and rendering in a live DSH
+  host have not been validated for this release.
+- No new real API or context/cache savings benchmark was run. The README charts
+  remain illustrations, and newer DSH versions have not passed live acceptance.
 
 ## [0.1.0] — 2026-10-15
 

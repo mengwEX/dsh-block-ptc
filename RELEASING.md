@@ -1,10 +1,13 @@
 # 发布指南
 
 仓库：<https://github.com/mengwEX/dsh-block-ptc>。包名与 bundle 中的插件解析名
-统一为 `dsh-block-ptc`。当前版本为 `0.1.0`，适配 DSH `0.2.0-rc.2`。
+统一为 `dsh-block-ptc`。当前版本为 `0.1.1`，声明最低 DSH 版本为
+`0.2.0-rc.2`、最低 Cordis 版本为 `4.0.4`，均不设版本上限。
 
-`0.1.0` 已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为
-`mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。
+包已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为
+`mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。`0.1.1` 增加了浏览器
+半边（工具行渲染与 PTC 的 `run_code` 一致）和让它可被加载的宿主层锚点行；
+两处都必须在真实宿主里验收，见文末第 4 节。
 
 GitHub Release 与 npm 是两条独立的发布流程。创建 GitHub Release 不会上传 npm，
 仓库 CI 也不持有 npm 凭据或自动执行 `npm publish`。
@@ -25,6 +28,8 @@ npm pack --dry-run
 - 涉及 DSH API 或预设配置的改动，要在目标版本的宿主中安装 bundle、重启应用，
   用 **Block PTC** 新建会话，验证程序委派、收口、消息保留及恢复行为。
 - 将真实宿主验收结果与 mock 测试结果分开记录；CI 不代表宿主端到端验收。
+- 保持 peer dependencies 只有最低版本要求，不按单个宿主版本锁定，也不增加
+  版本上限。另行记录实际验收版本；接口存在检查不能代替宿主行为验收。
 
 DSH peer dependencies 由宿主提供。本地检查不需要运行 `npm install`；这样也避免
 为无依赖的测试额外安装整个宿主。
@@ -89,4 +94,4 @@ plugin_manager remove_bundle dsh-block-ptc
 ```
 
 本地开发改动需要重启宿主才能换用新模块。升级 DSH 时重新验证 API、预设和
-`peerDependencies`，不要只修改版本范围后宣称兼容。
+浏览器渲染；只放宽版本范围或通过接口存在检查，均不能作为兼容验收结论。

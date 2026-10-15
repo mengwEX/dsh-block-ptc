@@ -1,8 +1,9 @@
 # Security
 
-Security fixes target the latest released version. The plugin targets the DSH
-versions listed in `package.json`; compatibility with other versions is not
-guaranteed.
+Security fixes target the latest released version. `package.json` declares
+minimum host versions without upper bounds. Those ranges permit installation;
+they do not imply every newer runtime has passed compatibility checks. See the
+README for verification history and current limits.
 
 Report suspected vulnerabilities privately to **mengw.ex@gmail.com**, with
 `dsh-block-ptc security` in the subject. Include affected versions and a minimal

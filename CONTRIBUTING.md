@@ -25,6 +25,9 @@ See the [README](README.md#install) for installation details.
 - Delegate program execution to the built-in PTC transport. Keep block state
   derived from the session log rather than adding a second persistence layer.
 - Preserve system/user messages and paired tool calls when replacing history.
+- Keep the single-string `id` API. Peer dependencies express minimum versions
+  without upper bounds; check required host capabilities and record live
+  compatibility evidence separately from the declared ranges.
 - For behavior changes, add a regression case to `tests/logic.test.mjs` and run
   `npm run check`. Explain whether validation used mocks or a live DSH profile.
 - Update both `README.md` and `README.zh.md` when user-facing behavior changes,

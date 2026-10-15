@@ -136,11 +136,11 @@ function makeSession(events, nodes, seq) {
     {
       seq: 52,
       type: 'tool/ptc-dispatch-start',
-      data: { subCallId: 'c2:blk:1:ptc:1', name: 'block_summary', arguments: { id: 'smoke', summary: 'handover' } },
+      data: { subCallId: 'c2:ptc:1', name: 'block_summary', arguments: { id: 'smoke', summary: 'handover' } },
     },
   ]
   const session = makeSession(events, [9, 10, 12, 19, 29, 33, 44, 46], 53)
-  const exec = { callId: 'c2:blk:1:ptc:1', rootCallId: 'c2', token: 'TOKEN', agent: { session }, signal: new AbortController().signal }
+  const exec = { callId: 'c2:ptc:1', rootCallId: 'c2', token: 'TOKEN', agent: { session }, signal: new AbortController().signal }
   const result = await defs.get('block_summary').execute({ id: 'smoke', summary: 'handover' }, exec)
   assert.deepEqual(result, { replaced: 3, tokensFreed: 30 }, 'B: replaces the model work only')
   const summary = appends[1]
@@ -197,6 +197,12 @@ function makeSession(events, nodes, seq) {
   assert.equal(dispatched.length, 1, 'exactly one nested dispatch')
   assert.equal(dispatched[0].name, 'run_code', 'the nested dispatch is the built-in transport')
   assert.equal(dispatched[0].parent, 'TOKEN2', 'nested dispatch carries the transport parent token')
+  // Rendering contract: the PTC bridge parents every program sub-call at the
+  // executing call's id, and the conversation UI only hangs sub-calls off a call
+  // node it can see. The nested transport must therefore reuse the outer id, not
+  // invent a synthetic parent node that never appears in the transcript.
+  assert.equal(dispatched[0].callId, 'c3', 'the nested transport reuses the outer call id')
+  assert.equal(dispatched[0].rootCallId, 'c3', 'the nested transport keeps the outer root call id')
   assert.equal(dispatched[0].arguments.description, '[block:a] goal A', 'block id is visible to the transport log')
 }
 
@@ -207,6 +213,62 @@ function makeSession(events, nodes, seq) {
   assert.equal(guard({ name: 'read', parent: 'TOKEN' }), undefined, 'nested sub-calls stay allowed')
   assert.match(guard({ name: 'read' }), /only `block_run_code` may be called directly/i, 'a direct call is denied')
   assert.match(guard({ name: 'run_code' }), /block_run_code/, 'the built-in transport is denied directly too')
+}
+
+// ── the host-level discovery anchor registers nothing ───────────────────────
+{
+  const anchorTools = []
+  const anchorGuards = []
+  const anchorSections = []
+  const anchorCtx = {
+    tools: {
+      register: (definition) => {
+        anchorTools.push(definition.name)
+        return () => {}
+      },
+      guard: (guard) => {
+        anchorGuards.push(guard)
+        return () => {}
+      },
+      execute: async () => {
+        throw new Error('the discovery anchor must not dispatch')
+      },
+    },
+    systemPrompt: {
+      section: (section) => {
+        anchorSections.push(section)
+        return () => {}
+      },
+    },
+    get: () => undefined,
+  }
+  apply(anchorCtx, { anchor: true })
+  assert.deepEqual(anchorTools, [], 'the discovery anchor registers no tools')
+  assert.deepEqual(anchorGuards, [], 'the discovery anchor installs no direct-call guard')
+  assert.deepEqual(anchorSections, [], 'the discovery anchor adds no prompt section')
+}
+
+// ── incompatible hosts fail before registering or appending anything ───────
+{
+  const before = [defs.size, guards.length, sections.length]
+  assert.throws(
+    () => apply({ ...fakeCtx, tools: { ...fakeCtx.tools, execute: undefined } }),
+    /incompatible DSH host API; missing tools\.execute/,
+  )
+  assert.deepEqual([defs.size, guards.length, sections.length], before, 'an incompatible host is not partially mounted')
+
+  let inspected = false
+  const session = {
+    surface: { nodes: [] },
+    snapshotEvents: () => { inspected = true; return [] },
+    eventAt: () => undefined,
+    deriveEventMessage: () => null,
+  }
+  await assert.rejects(
+    defs.get('block_summary').execute({ id: 'a', summary: 'handover' }, { agent: { session } }),
+    /incompatible DSH session API; missing append/,
+  )
+  assert.equal(inspected, false, 'a session without append is rejected before inspecting its history')
 }
 
 console.log('dsh-block-ptc logic test: OK')

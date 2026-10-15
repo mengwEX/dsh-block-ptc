@@ -7,7 +7,10 @@
 `0.2.0-rc.2`). The upstream project is available at
 <https://github.com/deepseek-ai/deepseek-harness>.
 
-The upstream preset is distributed under the following MIT license:
+`client/client.js` also adapts the host client's tool-row markup, styles and
+icons (`DisclosureRow` and `ToolRow`) under the plugin's `dbp-` prefix.
+
+The adapted upstream code is distributed under the following MIT license:
 
 MIT License
 
