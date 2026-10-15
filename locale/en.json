@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "dsh-block-ptc",
+    "description": "Blackboard blocks for PTC mode: block_run_code runs every program inside a named block, and block_summary replaces a finished block's messages with a summary the model writes itself."
+  }
+}

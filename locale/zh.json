@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "黑板模式（Block PTC）",
+    "description": "给 PTC 模式加「黑板块」：block_run_code 让每次执行都归属一个具名区块，block_summary 用 AI 自己写的摘要替换已收口的区块内容。"
+  }
+}
