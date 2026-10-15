@@ -3,6 +3,7 @@
 **English | [中文](README.zh.md)**
 
 [![CI](https://github.com/mengwEX/dsh-block-ptc/actions/workflows/ci.yml/badge.svg)](https://github.com/mengwEX/dsh-block-ptc/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/dsh-block-ptc.svg)](https://www.npmjs.com/package/dsh-block-ptc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Blackboard blocks for **PTC mode** in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
@@ -75,40 +76,33 @@ is a profile **bundle**: installing it adds one row to `dsh.profile.bundles`
 and one new agent preset, `block-ptc`. It does not modify the shipped `ptc`
 preset.
 
-### From GitHub
+### From npm (recommended)
 
-Clone the repository, then install its absolute path as a bundle:
-
-```sh
-git clone https://github.com/mengwEX/dsh-block-ptc.git
-```
-
-```
-plugin_manager  install_bundle  /absolute/path/to/dsh-block-ptc
-```
-
-Versioned source archives are available under
-[GitHub Releases](https://github.com/mengwEX/dsh-block-ptc/releases).
-
-### From npm (separate publication)
-
-GitHub releases do not publish to npm. Use this method only after the matching
-version is available in the npm registry.
-
-Ask the Plugin Manager for the package:
+Find **dsh-block-ptc** in the Harness Plugin Manager and install it, or ask an
+agent with the Plugin Manager tool enabled to install the bundle:
 
 ```
 plugin_manager  install_bundle  dsh-block-ptc
 ```
 
+The package is published on [npm](https://www.npmjs.com/package/dsh-block-ptc).
+Restart the application after installation and select the **Block PTC** preset.
+
 ### From a local checkout
+
+```sh
+git clone https://github.com/mengwEX/dsh-block-ptc.git
+```
+
+Install the absolute checkout path through the Plugin Manager:
 
 ```
 plugin_manager  install_bundle  /absolute/path/to/dsh-block-ptc
 ```
 
-Both go through pnpm in the target profile; the local form installs a `link:`
-dependency, which is what you want while developing.
+Both methods use pnpm in the target profile. The local form installs a `link:`
+dependency for development. Versioned source archives are also available under
+[GitHub Releases](https://github.com/mengwEX/dsh-block-ptc/releases).
 
 ### Manual install (equivalent, if you prefer files)
 

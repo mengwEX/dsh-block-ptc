@@ -3,6 +3,9 @@
 仓库：<https://github.com/mengwEX/dsh-block-ptc>。包名与 bundle 中的插件解析名
 统一为 `dsh-block-ptc`。当前版本为 `0.1.0`，适配 DSH `0.2.0-rc.2`。
 
+`0.1.0` 已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为
+`mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。
+
 GitHub Release 与 npm 是两条独立的发布流程。创建 GitHub Release 不会上传 npm，
 仓库 CI 也不持有 npm 凭据或自动执行 `npm publish`。
 
@@ -40,7 +43,7 @@ gh release create v0.1.0 dsh-block-ptc-0.1.0.tgz --verify-tag --title "v0.1.0" -
 release notes 应说明功能、安装方式、兼容版本和验证边界。发布后核对仓库的
 Releases 页面、tag 指向及附件内容。后续版本应使用对应的新版本号。
 
-## 3. 可选：单独发布到 npm
+## 3. 发布到 npm
 
 只有维护者明确决定上架 npm 时才执行。先确认账号对包名有发布权限，并查询注册表
 当前状态；仓库名相同并不保证 npm 包名仍然可用。

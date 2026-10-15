@@ -3,6 +3,7 @@
 **[English](README.md) | 中文**
 
 [![CI](https://github.com/mengwEX/dsh-block-ptc/actions/workflows/ci.yml/badge.svg)](https://github.com/mengwEX/dsh-block-ptc/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/dsh-block-ptc.svg)](https://www.npmjs.com/package/dsh-block-ptc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 **PTC 模式**加"黑板块"。
@@ -54,36 +55,33 @@ await tools.block_summary({ id, summary })    只能在程序内部调用
 
 要求：DeepSeek Harness `0.2.0-rc.2` 及其自带运行时。本插件是一个 profile **bundle**：安装它会往 `dsh.profile.bundles` 加一行，并新增一个名为 `block-ptc` 的 agent preset；**不会改动自带的 `ptc` preset**。
 
-### 从 GitHub 安装
+### 从 npm 安装（推荐）
 
-克隆仓库后，用绝对路径安装 bundle：
-
-```sh
-git clone https://github.com/mengwEX/dsh-block-ptc.git
-```
-
-```
-plugin_manager  install_bundle  /absolute/path/to/dsh-block-ptc
-```
-
-也可以从 [GitHub Releases](https://github.com/mengwEX/dsh-block-ptc/releases)
-下载指定版本的源码归档。
-
-### 从 npm 安装（单独发布）
-
-GitHub 发布不会自动发布到 npm；只有对应版本已上架 npm 后才能使用此方式。
+在 Harness 的 Plugin Manager 中搜索 **dsh-block-ptc** 并安装，或让启用了
+Plugin Manager 工具的 agent 安装 bundle：
 
 ```
 plugin_manager  install_bundle  dsh-block-ptc
 ```
 
+包已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)。安装后重启应用，
+新建会话时选择 **Block PTC** 预设。
+
 ### 从本地目录安装
+
+```sh
+git clone https://github.com/mengwEX/dsh-block-ptc.git
+```
+
+然后通过 Plugin Manager 安装目录的绝对路径：
 
 ```
 plugin_manager  install_bundle  /absolute/path/to/dsh-block-ptc
 ```
 
-两种方式都是在目标 profile 里走 pnpm；本地这种装的是 `link:` 依赖，开发时用这个。
+两种方式都在目标 profile 中使用 pnpm；本地方式安装 `link:` 依赖，适合开发。
+也可以从 [GitHub Releases](https://github.com/mengwEX/dsh-block-ptc/releases)
+下载指定版本的源码归档。
 
 ### 手动安装（等价做法）
 
