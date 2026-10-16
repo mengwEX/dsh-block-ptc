@@ -4,7 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] — 2026-10-16
+
+### Changed
+
+- Both tools accept `ids`; the old `id` remains an alias for `[id]`. Whole
+  assistant messages and their tool results receive the union of the block ids
+  in that step, including thinking/content before the calls.
+- Replace the complete first-to-last target interval. Summary checkpoints
+  inherit the interval's remaining ids and can be summarized again; a checkpoint
+  with empty ids is retained. `AABACB` closing A becomes `S[B]CB`.
+- Wait for unfinished tool pairs before replacing the full interval. Successful
+  queued requests are reconstructed from the session log; failed attempts alone
+  do not close any ids. Protected-message boundaries reject the whole interval.
+- Give summaries their own `<block-summary>` framing, separate from native
+  automatic compaction. Identify the text as the agent's summary of earlier
+  work; hide empty memberships from the text and tool return value.
+- Ask summaries to distinguish completed results, unfinished work and the next
+  step. Show multiple ids in the browser tool row.
+
+### Fixed
+
+- Include host-generated `tool-jobs` completion notices in block replacement
+  intervals instead of rejecting them as human instructions. Support both the
+  legacy and plugin source formats while keeping human/system/developer and
+  unknown plugin messages protected.
 
 ## [0.1.1] — 2026-10-15
 
@@ -115,5 +139,7 @@ First release: blackboard blocks for PTC mode.
   dispatch, the whole transaction, and the failure path that still releases the
   compaction lock.
 
-[Unreleased]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.1.0

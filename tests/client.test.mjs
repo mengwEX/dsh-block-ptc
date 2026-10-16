@@ -126,13 +126,13 @@ const running = Row({
   phase: 'start',
   toolName: 'block_run_code',
   callId: 'c2',
-  block: { phase: 'start', callId: 'c2', name: 'block_run_code', argsRaw: '{"id":"auth","description":"Rework auth","code":"return 1"}', subCalls: [] },
+  block: { phase: 'start', callId: 'c2', name: 'block_run_code', argsRaw: '{"ids":["auth","parser"],"description":"Rework auth","code":"return 1"}', subCalls: [] },
   t,
 })
 assert.equal(running.props['data-state'], 'running', 'a dispatched call renders as running')
 assert.equal(running.props['data-variant'], 'code', 'the row claims the built-in code variant')
 assert.ok(texts(running).includes('row.title'), 'the title is the code title')
-assert.ok(texts(running).includes('[auth] Rework auth'), 'the summary is the block id and its goal')
+assert.ok(texts(running).includes('[auth, parser] Rework auth'), 'the summary is the block id and its goal')
 assert.equal(find(running, (props) => props['data-expandable'] === true).props.role, 'button', 'the row is an expandable disclosure')
 assert.equal(find(running, (props) => props.className === 'dbp-code'), undefined, 'the program stays collapsed until the row is opened')
 

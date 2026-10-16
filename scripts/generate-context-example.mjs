@@ -70,16 +70,14 @@ function run(compact) {
     pastInputs.push(input)
     session.append('step/start', { turn: 1, step })
     surface('assistant/message', { turn: 1, step, message: { content: [{ type: 'tool-call' }] } }, config.assistantTokens)
-    session.append('tool/call', { turn: 1, step, name: 'block_run_code', arguments: JSON.stringify({ id: `task-${block}`, description: `Illustrative task ${block}` }) })
-    if (compact && step % config.requestsPerBlock === 0) {
-      const closing = session.append('tool/ptc-dispatch-start', { subCallId: `call-${step}:ptc:1`, name: 'block_summary', arguments: { id: `task-${block}`, summary: 'Synthetic summary' } })
-      const plan = __internals.planReplacement(session, `task-${block}`, closing.seq)
-      assert.equal(plan.kind, 'replace')
-      __internals.commitReplacement(ctx, session, plan, `task-${block}`, 'Synthetic summary')
-      // The closing request's assistant/tool pair is in flight during replacement.
-      // It lands afterwards and remains in the next input, just as in the plugin.
-    }
+    session.append('tool/call', { turn: 1, step, name: 'block_run_code', arguments: JSON.stringify({ ids: [`task-${block}`], description: `Illustrative task ${block}` }) })
     surface('tool/result', { turn: 1, step, message: {} }, config.toolResultTokens)
+    if (compact && step % config.requestsPerBlock === 0) {
+      const closing = session.append('tool/ptc-dispatch-start', { subCallId: `call-${step}:ptc:1`, name: 'block_summary', arguments: { ids: [`task-${block}`], summary: 'Synthetic summary' } })
+      const plan = __internals.planReplacement(session, [`task-${block}`])
+      assert.equal(plan.kind, 'replace')
+      __internals.commitReplacement(ctx, session, plan, [`task-${block}`], 'Synthetic summary', closing.seq)
+    }
   }
   return requests
 }
@@ -89,7 +87,7 @@ const data = {
   assumptions: [
     'Equal 4096-token fixed prefix in both presets; wrapper/schema/prompt overhead is normalized away.',
     'Four tasks, three requests per task; each new user instruction weighs 256 tokens; each completed assistant/tool pair weighs 2048.',
-    'Each summary weighs 512 tokens; compaction happens inside requests 3, 6, 9 and 12, without an extra request. User instructions and the closing in-flight pair remain.',
+    'Each summary weighs 512 tokens; compaction happens inside requests 3, 6, 9 and 12, without an extra request. The complete tool pair settles before the queued replacement; user instructions remain.',
     'Baseline is append-only PTC before its automatic compaction threshold is reached, not a comparison against every DSH compaction strategy.',
     'Ideal independent cache per arm: longest unchanged input prefix from earlier inputs, rounded down to 64-token units. No retention misses, cache build delay or contention.',
     'These are synthetic inputs and modeled cache hits, not real provider usage, speed, cost, quality or savings measurements.',

@@ -191,7 +191,10 @@ window.__ModuleLoader__.load({
       const state = blockState(block)
       const output = settled ? resultText(block) : null
       const code = typeof value.code === 'string' ? value.code : ''
-      const id = typeof value.id === 'string' && value.id !== '' ? value.id : undefined
+      const ids = Array.isArray(value.ids)
+        ? [...new Set(value.ids.filter((id) => typeof id === 'string' && id !== ''))]
+        : typeof value.id === 'string' && value.id !== '' ? [value.id] : []
+      const id = ids.length === 0 ? undefined : ids.join(', ')
       const goal = typeof value.description === 'string' && value.description !== '' ? firstLine(value.description) : undefined
       const summary =
         goal === undefined ? (id ?? block.callId) : id === undefined ? goal : `[${id}] ${goal}`

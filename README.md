@@ -8,15 +8,18 @@
 
 Blackboard blocks for **PTC mode** in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
-A *block* is a blackboard region. Every program the model runs is tagged with a
-block id, and when the block's work is finished the model hands in a summary
+Version `0.2.0` supports `ids` on both tools. The legacy `id` parameter remains
+an alias for `ids: [id]`.
+
+A *block* is a blackboard region. Every program the model runs is tagged with
+block ids, and when the block's work is finished the model hands in a summary
 **it writes itself** — which then replaces that block's messages in the model's
 own context. The original messages stay in the append-only session log, so the
 human transcript keeps everything and replay stays deterministic.
 
 - DeepSeek Harness **0.2.0-rc.2 or newer**; no upper version bound
 - Community plugin maintained by [mengwEX](https://github.com/mengwEX)
-- **Zero runtime dependencies** — the plugin imports nothing but `node:crypto`
+- **Zero runtime dependencies** — the only external import is `node:crypto`
 - License: **MIT**
 
 ## Table of contents
@@ -42,8 +45,8 @@ were one finished sub-task and the next ten are a new one.
 
 This plugin lets the model draw that line itself: open a block, work inside it,
 and close it with a handover summary — so the context it keeps is the one it
-chose to keep. The summary costs no extra model request, because the model is
-already generating when it closes the block.
+chose to keep. The model submits the summary inside its program call; the plugin
+does not run a separate summarizer model.
 
 ## Context and cache comparison
 
@@ -57,34 +60,39 @@ still occupy the context window.
 After a block closes, the next request carries a summary in place of its
 completed work. Replacing history can also invalidate the cached suffix:
 **smaller context does not guarantee a higher cache-hit rate or a lower bill**.
-The closing in-flight assistant/tool pair and all user messages remain. The
-baseline here has not reached its built-in automatic compaction threshold.
+The closing assistant/tool pair settles before replacement; original user
+messages remain. The baseline has not reached its automatic compaction threshold.
 
 See the [data, assumptions and reproduction steps](docs/context-comparison/README.md).
-The real API fields needed for a measured version are documented there; the
-plugin's `tokensFreed` is not a provider cache-hit measurement.
+The plugin's `tokensFreed` is not a provider cache-hit measurement.
 
 ## How it works
 
 The model's whole surface is two callables:
 
 ```
-block_run_code({ id, description, code })     the only tool it may call directly
-await tools.block_summary({ id, summary })    callable from inside a program
+block_run_code({ ids, description, code })     the only tool it may call directly
+await tools.block_summary({ ids, summary })    callable from inside a program
 ```
 
-1. `block_run_code` runs the program through the built-in PTC `run_code`
-   transport (nested dispatch), so program semantics, the `tools.*` SDK,
-   sub-call logging, sandbox, timeouts and result rendering are the built-in
-   ones. On top of that it records that this step belongs to block `id`.
-   The first call with a new id opens the block; later calls continue it.
-2. While a block is open, every message the model produces belongs to it.
-3. `tools.block_summary({ id, summary })` closes it. The plugin replaces the
-   first eligible contiguous span of completed messages with **one** summary
-   at the start of that span. System/user messages and in-flight tool pairs
-   remain; messages outside the replaced span also remain.
-4. A node that belongs to several blocks is only replaced once every one of
-   those blocks has been summarized.
+1. `block_run_code` delegates its program to built-in PTC `run_code`. Its `ids`
+   apply to the complete assistant message, including preceding thinking/text,
+   and its tool results. Calls in the same assistant message contribute the
+   union of their ids.
+2. `tools.block_summary({ ids, summary })` replaces the complete interval from
+   the earliest to the latest occurrence of any target id with one summary.
+3. The summary inherits the union of the interval's ids minus the target ids.
+   It can participate in a later summary. A summary with no remaining ids stays.
+4. If a tool pair in the interval is unfinished, the request is queued until
+   its result lands. A protected system/user/developer message refuses the
+   entire interval; no prefix is silently replaced.
+
+```text
+A A B A C B  -- summary([A]) --> S[B] C B
+S[B] C B    -- summary([B]) --> T[C]
+T[C]        -- summary([C]) --> U[]
+A A B A C B -- summary([A, B]) --> S[C]
+```
 
 What the human sees afterwards: the transcript still shows every original
 turn (the log is append-only); the model's next request shows the summary
@@ -178,7 +186,7 @@ You should see:
 - a closing call to `block_summary` whose return value is
   `{"replaced": 3, "tokensFreed": 346}` — how many messages were replaced and
   the estimated token count of the replaced messages (before counting the new summary);
-- the summary node `[block:<id>] …` sitting where those messages were.
+- a `<block-summary>…</block-summary>` node sitting where those messages were.
 
 If a tool call is refused with *"In block mode only `block_run_code` may be
 called directly"*, that is the preset's guard working: in this mode every other
@@ -190,15 +198,18 @@ tool is reached from inside a program, exactly like PTC mode.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `id` | string | yes | Block id, a short stable slug such as `auth-refactor`. Everything this program does belongs to this block. |
-| `description` | string | yes | One line stating the block's goal. Kept as the block's durable intent and used as the summary's header. |
+| `ids` | string[] | yes* | Non-empty, unique block ids for this work, such as `["auth-refactor"]`. |
+| `id` | string | no | Legacy alias for `ids: [id]`. Supply either form, not both. |
+| `description` | string | yes | One line stating the goal of this work, displayed in the tool row. |
 | `code` | string | yes | Program body; top-level `await` and `return` are available and `return` becomes the result. |
 | `timeoutMs` | number | no | Elapsed execution budget for this program. |
+
+*`ids` is required unless the legacy `id` is supplied.
 
 Returns the `run_code` result verbatim: `{ logs, result?, sandbox? }`,
 rendered exactly as PTC mode renders it. The browser half registers the call
 into DSH's keyed Tool view slot and draws the same `code` row the built-in gives
-`run_code` — the `Code` title, `[<block id>] <goal>` as the summary, and the
+`run_code` — the `Code` title, `[<block ids>] <goal>` as the summary, and the
 program plus its output behind the row — with every `bash`/`read`/`write` card
 the program dispatches nested inside it.
 
@@ -206,16 +217,27 @@ the program dispatches nested inside it.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `id` | string | yes | Block to close. |
-| `summary` | string | yes | Written by the model. Summarize all content for this block id and submit the summary to replace the original content. Retain necessary information, such as file paths, as needed. |
+| `ids` | string[] | yes* | Block ids to summarize and close. |
+| `id` | string | no | Legacy alias for `ids: [id]`. Supply either form, not both. |
+| `summary` | string | yes | Written by the model. Summarize the complete first-to-last interval for these ids. State the goal, completed work and results, unfinished work, and next step; if only reporting to the user remains, say so. Retain necessary details as appropriate. |
 
-Returns `{ replaced, tokensFreed }`, or `{ replaced: 0, tokensFreed: 0, note }`
-when there was nothing committed to replace yet; no summary is inserted in that
-case. A successful summary is inserted at the start of the first eligible
-contiguous span, not necessarily the block's first message if that message is
-still protected. `tokensFreed` is the estimated
-price of the replaced messages, not net context savings; the replacement summary
-also consumes tokens.
+*`ids` is required unless the legacy `id` is supplied.
+
+The replacement text identifies itself as your summary of earlier work and is
+wrapped in `<block-summary>…</block-summary>`. It includes a `Block ids` line
+only when memberships remain. Empty ids stay in internal metadata. This format
+is separate from DSH automatic compaction; both can coexist.
+
+On immediate completion, returns `{ replaced, tokensFreed, ids? }`; `ids`, when
+non-empty, are the memberships inherited by the summary. `tokensFreed` is the estimated size of the
+replaced messages, before the new summary's cost.
+
+If tool results or another compaction are still pending, returns
+`{ replaced: 0, tokensFreed: 0, pending: true, requestSeq, note }`. This acknowledges
+queuing, not a completed replacement. The logged successful tool outcome lets
+the plugin resume the request after restart/fork. Deferred failures are logged;
+target memberships remain until a replacement commits. Missing target ids and
+protected messages reject the whole request without removing any memberships.
 
 ### Preset `block-ptc`
 
@@ -283,19 +305,24 @@ summary is the model's own text, and these four events are only the bookkeeping
 DSH requires for the replacement. Every failure makes exactly one close attempt,
 so a failed summary can never leave the durable lock behind.
 
-**What is never replaced.** The system prompt and every user-role message. A
-user message inside a block's span breaks the run instead of being swallowed by
-it, and the in-flight assistant message is excluded because its tool result has
-not landed yet.
+**What is preserved.** System, developer and original user messages are never
+replaced. If they occur inside the target interval, the entire operation is
+refused. Background-job completion notices from `tool-jobs` inside the interval
+are summarized with tool output, including hosts that use the newer plugin
+source format. Other plugin messages stay protected. Our own summary checkpoints
+may be replaced again. Unfinished tool
+pairs delay the complete replacement rather than leaving a target-id suffix.
 
-**Where the state lives.** Blocks are derived from the session log on demand —
-`tool/call` events for openings, `tool/ptc-dispatch-start` events for closings —
-so nothing is stored outside the session and blocks survive resume and fork.
+**Where the state lives.** `tool/call` arguments assign message memberships.
+Committed summary checkpoints carry the remaining ids, closed ids and request
+sequence in `source.blockPtc`. A summary attempt alone closes nothing. Successful
+queued outcomes are replayable; a `session/event` observer schedules completion
+outside the append boundary. No second persistence store is used.
 
 **Why the plugin has no external imports.** Profile bundles can be installed as
 symlinks; a plugin that imports `@deepseek-ai/dsh-*` by bare specifier can fail
-to resolve depending on how the host links it. This plugin imports only
-`node:crypto`, so it loads wherever it is put.
+to resolve depending on how the host links it. Its only external import is
+`node:crypto`; membership helpers use a bundled relative module.
 
 ## Verification
 
@@ -304,6 +331,12 @@ npm run check          # syntax + both tests
 node tests/logic.test.mjs
 node tests/client.test.mjs
 ```
+
+The `ids` implementation passes these offline tests and append/replay
+checks using DSH `0.2.0-rc.2`'s real `Session`. To repeat the optional native check,
+run `tests/native-session.mjs` with the installed `dsh-session/lib/index.js` path
+as its argument. An ASAR installation requires the desktop executable in
+`ELECTRON_RUN_AS_NODE=1` mode. This does not run a model or validate the live UI.
 
 The logic test drives the real plugin entry with a fake context and fake
 sessions: tool registration, the guard, the nested `run_code` dispatch, the
@@ -359,14 +392,14 @@ The same transaction was replayed offline through the runtime's own
 
 ## Known limits
 
-- A block's span is everything produced between its opening `block_run_code`
-  and its `block_summary`. If another block stays open across that span, only
-  the first contiguous released run is replaced; the rest is picked up by a
-  later summary that covers it.
-- Summaries are lossy by design. Anything the model does not write down is gone
-  from its context.
-- One block is summarized by one replacement, and one summary is one message —
-  there is no second-level outline of summaries.
+- One summary replaces one complete contiguous first-to-last interval. A
+  protected system/user/developer message rejects that interval; it is not
+  skipped and no prefix is treated as a completed summary.
+- Summaries are lossy: necessary information must be included in their text.
+- Checkpoints inherit remaining ids and may be summarized again. A checkpoint
+  with empty ids is retained as the completed result.
+- Existing `id` calls are supported. Already compacted legacy history has no
+  recoverable `ids` ownership metadata; it is not retroactively retagged.
 - Blocks are per session. Sub-agents run their own context and their own blocks.
 - Peer dependencies declare minimum versions without an upper bound. Newer
   hosts are allowed, but compatible event semantics, preset configuration and
@@ -376,7 +409,8 @@ The same transaction was replayed offline through the runtime's own
 
 ```
 .
-├── lib/plugin.js        the whole plugin (zero external imports)
+├── lib/plugin.js        host tools, deferred requests and transactions
+├── lib/blocks.js        message memberships and interval planning
 ├── cordis.patch.yml     the bundle patch: one new preset, `block-ptc`
 ├── locale/{en,zh}.json  display metadata read by the Harness UI
 ├── tests/logic.test.mjs the logic and transaction tests

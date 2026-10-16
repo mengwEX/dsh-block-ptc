@@ -601,64 +601,64 @@ z
    <g id="patch_32">
     <path d="M 855.615484 449.856
 L 884.701935 449.856
-L 884.701935 391.666176
-L 855.615484 391.666176
+L 884.701935 408.29184
+L 855.615484 408.29184
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_33">
     <path d="M 898.389677 449.856
 L 927.476129 449.856
-L 927.476129 375.040512
-L 898.389677 375.040512
+L 927.476129 391.666176
+L 898.389677 391.666176
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_34">
     <path d="M 941.163871 449.856
 L 970.250323 449.856
-L 970.250323 391.666176
-L 941.163871 391.666176
+L 970.250323 408.29184
+L 941.163871 408.29184
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_35">
     <path d="M 983.938065 449.856
 L 1013.024516 449.856
-L 1013.024516 368.805888
-L 983.938065 368.805888
+L 1013.024516 402.057216
+L 983.938065 402.057216
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_36">
     <path d="M 1026.712258 449.856
 L 1055.79871 449.856
-L 1055.79871 352.180224
-L 1026.712258 352.180224
+L 1055.79871 385.431552
+L 1026.712258 385.431552
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_37">
     <path d="M 1069.486452 449.856
 L 1098.572903 449.856
-L 1098.572903 368.805888
-L 1069.486452 368.805888
+L 1098.572903 402.057216
+L 1069.486452 402.057216
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_38">
     <path d="M 1112.260645 449.856
 L 1141.347097 449.856
-L 1141.347097 345.9456
-L 1112.260645 345.9456
+L 1141.347097 395.822592
+L 1112.260645 395.822592
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
    <g id="patch_39">
     <path d="M 1155.034839 449.856
 L 1184.12129 449.856
-L 1184.12129 329.319936
-L 1155.034839 329.319936
+L 1184.12129 379.196928
+L 1155.034839 379.196928
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #4463b3"/>
    </g>
@@ -689,72 +689,72 @@ z
    <g id="patch_43">
     <path d="M 812.84129 414.526464
 L 841.927742 414.526464
-L 841.927742 391.666176
-L 812.84129 391.666176
+L 841.927742 408.29184
+L 812.84129 408.29184
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_44">
-    <path d="M 855.615484 391.666176
+    <path d="M 855.615484 408.29184
+L 884.701935 408.29184
 L 884.701935 391.666176
-L 884.701935 375.040512
-L 855.615484 375.040512
+L 855.615484 391.666176
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_45">
-    <path d="M 898.389677 375.040512
+    <path d="M 898.389677 391.666176
+L 927.476129 391.666176
 L 927.476129 375.040512
-L 927.476129 358.414848
-L 898.389677 358.414848
+L 898.389677 375.040512
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_46">
-    <path d="M 941.163871 391.666176
-L 970.250323 391.666176
-L 970.250323 368.805888
-L 941.163871 368.805888
+    <path d="M 941.163871 408.29184
+L 970.250323 408.29184
+L 970.250323 402.057216
+L 941.163871 402.057216
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_47">
-    <path d="M 983.938065 368.805888
-L 1013.024516 368.805888
-L 1013.024516 352.180224
-L 983.938065 352.180224
+    <path d="M 983.938065 402.057216
+L 1013.024516 402.057216
+L 1013.024516 385.431552
+L 983.938065 385.431552
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_48">
-    <path d="M 1026.712258 352.180224
-L 1055.79871 352.180224
-L 1055.79871 335.55456
-L 1026.712258 335.55456
+    <path d="M 1026.712258 385.431552
+L 1055.79871 385.431552
+L 1055.79871 368.805888
+L 1026.712258 368.805888
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_49">
-    <path d="M 1069.486452 368.805888
-L 1098.572903 368.805888
-L 1098.572903 345.9456
-L 1069.486452 345.9456
+    <path d="M 1069.486452 402.057216
+L 1098.572903 402.057216
+L 1098.572903 395.822592
+L 1069.486452 395.822592
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_50">
-    <path d="M 1112.260645 345.9456
-L 1141.347097 345.9456
-L 1141.347097 329.319936
-L 1112.260645 329.319936
+    <path d="M 1112.260645 395.822592
+L 1141.347097 395.822592
+L 1141.347097 379.196928
+L 1112.260645 379.196928
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
    <g id="patch_51">
-    <path d="M 1155.034839 329.319936
-L 1184.12129 329.319936
-L 1184.12129 312.694272
-L 1155.034839 312.694272
+    <path d="M 1155.034839 379.196928
+L 1184.12129 379.196928
+L 1184.12129 362.571264
+L 1155.034839 362.571264
 z
 " clip-path="url(#p4a472d3b27)" style="fill: #eaa45b"/>
    </g>
@@ -774,63 +774,63 @@ z
     <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="784.610323" y="377.865576" transform="rotate(-0 784.610323 377.865576)">8.4</text>
    </g>
    <g id="text_52">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="827.384516" y="388.256616" transform="rotate(-0 827.384516 388.256616)">7.2</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="827.384516" y="404.88228" transform="rotate(-0 827.384516 404.88228)">5.1</text>
    </g>
    <g id="text_53">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="870.15871" y="371.630952" transform="rotate(-0 870.15871 371.630952)">9.2</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="870.15871" y="388.256616" transform="rotate(-0 870.15871 388.256616)">7.2</text>
    </g>
    <g id="text_54">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="912.932903" y="355.005288" transform="rotate(-0 912.932903 355.005288)">11.3</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="912.932903" y="371.630952" transform="rotate(-0 912.932903 371.630952)">9.2</text>
    </g>
    <g id="text_55">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="955.707097" y="365.396328" transform="rotate(-0 955.707097 365.396328)">10.0</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="955.707097" y="398.647656" transform="rotate(-0 955.707097 398.647656)">5.9</text>
    </g>
    <g id="text_56">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="998.48129" y="348.770664" transform="rotate(-0 998.48129 348.770664)">12.0</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="998.48129" y="382.021992" transform="rotate(-0 998.48129 382.021992)">7.9</text>
    </g>
    <g id="text_57">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1041.255484" y="332.145" transform="rotate(-0 1041.255484 332.145)">14.1</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1041.255484" y="365.396328" transform="rotate(-0 1041.255484 365.396328)">10.0</text>
    </g>
    <g id="text_58">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1084.029677" y="342.53604" transform="rotate(-0 1084.029677 342.53604)">12.8</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1084.029677" y="392.413032" transform="rotate(-0 1084.029677 392.413032)">6.7</text>
    </g>
    <g id="text_59">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1126.803871" y="325.910376" transform="rotate(-0 1126.803871 325.910376)">14.8</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1126.803871" y="375.787368" transform="rotate(-0 1126.803871 375.787368)">8.7</text>
    </g>
    <g id="text_60">
-    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1169.578065" y="309.284712" transform="rotate(-0 1169.578065 309.284712)">16.9</text>
+    <text style="fill: #14263d; font: 8.5px 'Hiragino Sans GB'; text-anchor: middle" x="1169.578065" y="359.161704" transform="rotate(-0 1169.578065 359.161704)">10.8</text>
    </g>
    <g id="patch_52">
-    <path d="M 833.309127 277.29895
-Q 830.402238 329.6289 827.569762 380.619274
+    <path d="M 833.370877 277.300964
+Q 830.4262 337.941496 827.546597 397.241966
 " style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 829.788538 376.736358
-L 827.569762 380.619274
-L 825.794695 376.514503
+    <path d="M 829.738253 393.343679
+L 827.546597 397.241966
+L 825.74296 393.149669
 " style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="text_61">
     <text style="fill: #008574; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="833.800645" y="271.26" transform="rotate(-0 833.800645 271.26)">前缀重建</text>
    </g>
    <g id="patch_53">
-    <path d="M 961.510439 277.298716
-Q 958.677927 318.197657 955.93811 357.758162
+    <path d="M 961.672458 277.295387
+Q 958.74066 334.821857 955.877149 391.008425
 " style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 958.209694 353.905903
-L 955.93811 357.758162
-L 954.219253 353.629539
+    <path d="M 958.07815 387.115406
+L 955.877149 391.008425
+L 954.083334 386.911813
 " style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="text_62">
     <text style="fill: #008574; font: 10px 'Hiragino Sans GB'; text-anchor: middle" x="962.123226" y="271.26" transform="rotate(-0 962.123226 271.26)">前缀重建</text>
    </g>
    <g id="patch_54">
-    <path d="M 1089.632421 277.297135
-Q 1086.922525 306.770415 1084.335466 334.90769
+    <path d="M 1089.97142 277.29787
+Q 1087.054131 331.704879 1084.208677 384.772172
 " style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
-    <path d="M 1086.693298 331.107607
-L 1084.335466 334.90769
-L 1082.710099 330.741375
+    <path d="M 1086.41998 380.884995
+L 1084.208677 384.772172
+L 1082.425717 380.670824
 " style="fill: none; stroke: #008574; stroke-width: 1.2; stroke-linecap: round"/>
    </g>
    <g id="text_63">
@@ -856,7 +856,7 @@ L 1082.710099 330.741375
    <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="568.9728" transform="rotate(-0 85.68 568.9728)">固定前缀 4,096；每条用户消息 256；每对 assistant/tool 消息 2,048；每段摘要 512 token。</text>
   </g>
   <g id="text_70">
-   <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="594.9504" transform="rotate(-0 85.68 594.9504)">保留用户消息及收口时尚未完成的调用。缓存采用理想前缀模型，不代表实测费用、速度或质量。</text>
+   <text style="fill: #57697e; font: 10px 'Hiragino Sans GB'; text-anchor: start" x="85.68" y="594.9504" transform="rotate(-0 85.68 594.9504)">调用对完成后整段替换，用户消息保留。理想缓存模型，不代表实测费用、速度或质量。</text>
   </g>
   <g id="legend_1">
    <g id="patch_55">

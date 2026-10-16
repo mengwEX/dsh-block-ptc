@@ -1,7 +1,7 @@
 {
   "name": "dsh-block-ptc",
-  "version": "0.1.1",
-  "description": "Blackboard blocks for DeepSeek Harness PTC mode: block_run_code tags every program run with a block id, and block_summary replaces a finished block's messages with a summary the model writes itself.",
+  "version": "0.2.0",
+  "description": "Blackboard blocks for DeepSeek Harness PTC mode: block_run_code assigns block ids to program messages, and block_summary replaces their complete interval with a model-written summary that inherits the remaining ids.",
   "type": "module",
   "license": "MIT",
   "author": "WangMeng <mengw.ex@gmail.com> (https://github.com/mengwEX)",
@@ -34,7 +34,7 @@
     "./locale/*.json": "./locale/*.json"
   },
   "files": [
-    "lib/plugin.js",
+    "lib/*.js",
     "client/client.js",
     "cordis.patch.yml",
     "locale/*.json",
@@ -66,7 +66,7 @@
   },
   "scripts": {
     "test": "node tests/logic.test.mjs && node tests/client.test.mjs",
-    "check": "node --check lib/plugin.js && node --check client/client.js && node --check tests/logic.test.mjs && node --check tests/client.test.mjs && npm test",
+    "check": "node --check lib/plugin.js && node --check lib/blocks.js && node --check client/client.js && node --check tests/logic.test.mjs && node --check tests/client.test.mjs && npm test",
     "test:client": "node --check client/client.js",
     "prepack": "npm run check"
   }

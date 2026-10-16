@@ -1,7 +1,7 @@
 # 发布指南
 
 仓库：<https://github.com/mengwEX/dsh-block-ptc>。包名与 bundle 中的插件解析名
-统一为 `dsh-block-ptc`。当前版本为 `0.1.1`，声明最低 DSH 版本为
+统一为 `dsh-block-ptc`。本次发布版本为 `0.2.0`，此前 npm 版本为 `0.1.1`。声明最低 DSH 版本为
 `0.2.0-rc.2`、最低 Cordis 版本为 `4.0.4`，均不设版本上限。
 
 包已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为

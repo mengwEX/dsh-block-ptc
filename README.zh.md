@@ -8,11 +8,13 @@
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 **PTC 模式**加"黑板块"。
 
-一个 *block* 就是一块黑板区域：AI 跑的每个程序都归属于一个 block id；这块活干完之后，AI 交上一段**自己写的**摘要，这段摘要会替换掉该 block 在**它自己上下文里**的那些消息。原始消息仍然留在只追加（append-only）的会话日志里，所以人的对话记录一条不少，回放也保持确定性。
+`0.2.0` 的两个工具均支持 `ids`，同时兼容旧参数 `id`，等价于 `ids: [id]`。
+
+一个 *block* 就是一块黑板区域：AI 跑的每个程序可归属于多个 block id；这块活干完之后，AI 交上一段**自己写的**摘要，这段摘要会替换掉该 block 在**它自己上下文里**的那些消息。原始消息仍然留在只追加（append-only）的会话日志里，所以人的对话记录一条不少，回放也保持确定性。
 
 - 要求 DeepSeek Harness **0.2.0-rc.2 或更新版本**，不设版本上限
 - 由 [mengwEX](https://github.com/mengwEX) 维护的社区插件
-- **零运行时依赖** —— 插件除了 `node:crypto` 不 import 任何东西
+- **零运行时依赖** —— 唯一外部 import 是 Node 内置的 `node:crypto`
 - 许可证：**MIT**
 
 ## 目录
@@ -34,7 +36,7 @@
 
 内置的自动压缩是在 token 压力上来时按**体量**决定压哪一段的，它并不知道"刚才那四十条消息是一个已经做完的子任务，接下来十条是新任务"。
 
-这个插件把这条线交给 AI 自己画：开一块，在里面干活，收口时交一段交接摘要——于是留在上下文里的，是**它自己选择要留的**那部分。摘要不额外花一次模型请求，因为收口时它本来就在生成。
+这个插件把这条线交给 AI 自己画：开一块，在里面干活，收口时交一段交接摘要——于是留在上下文里的，是**它自己选择要留的**那部分。摘要由模型在现有程序调用中提交，插件不会另起摘要模型请求。
 
 ## 上下文与缓存对比
 
@@ -46,25 +48,32 @@
 
 区块收口后，下一次请求用摘要替换已完成的内容。但改写历史也可能使后面的缓存
 前缀失效：**上下文变小不保证缓存命中率更高，也不保证费用一定下降**。
-收口时尚未完成的 assistant/tool 消息及所有用户消息仍保留。
+收口时的 assistant/tool 调用对完成后一起替换，原始用户消息保留。
 原生 PTC 在本例中尚未触发内置自动压缩阈值。
 
-[数据、假设与重现方法](docs/context-comparison/README.md) 已一并提供，也说明了
-真实实测应采集的 API 字段；`tokensFreed` 不能当作缓存命中统计。
+[数据、假设与重现方法](docs/context-comparison/README.md) 已一并提供；
+`tokensFreed` 不能当作 API 缓存命中统计。
 
 ## 工作原理
 
 AI 能直接看到的只有两个可调用：
 
 ```
-block_run_code({ id, description, code })     唯一可直接调用的工具
-await tools.block_summary({ id, summary })    只能在程序内部调用
+block_run_code({ ids, description, code })     唯一可直接调用的工具
+await tools.block_summary({ ids, summary })    只能在程序内部调用
 ```
 
-1. `block_run_code` 把程序**原样交给内置的 PTC `run_code` 传输层**执行（嵌套派发），所以程序语义、`tools.*` SDK、子调用日志、沙箱、超时、结果渲染全是内置那套；它额外记下"这一步属于 block `id`"。同一个 id 第一次调用即开块，之后继续沿用。
-2. 块开着期间，AI 产生的每条消息都归属它。
-3. `tools.block_summary({ id, summary })` 收口：插件用 AI 写的摘要替换第一段连续、已完成且可释放的消息，摘要位于该段起点。系统/用户消息、尚未完成的工具调用对及被替换段之外的消息仍保留。
-4. 一条消息若同时归属多个 block，要等这些 block **全部**收口后才会被替换。
+1. `block_run_code` 将程序交给内置 PTC `run_code`。`ids` 归属覆盖整条 assistant 消息（包含工具调用前的 thinking/content）及对应工具结果；同一消息内多个调用的 `ids` 取并集。
+2. `tools.block_summary({ ids, summary })` 用一条摘要替换目标 id 最早到最晚出现之间的完整区间。
+3. 摘要继承区间内全部 `ids` 的并集，再移除本次收口的目标 id。它能继续参与后续总结，`ids` 为空的摘要也保留。
+4. 区间内尚未完成的工具调用对会等待结果落地。若区间跨越受保护的系统/用户/developer 消息，则整次拒绝，不只替换前一段。
+
+```text
+A A B A C B  -- summary([A]) --> S[B] C B
+S[B] C B    -- summary([B]) --> T[C]
+T[C]        -- summary([C]) --> U[]
+A A B A C B -- summary([A, B]) --> S[C]
+```
 
 之后你会看到：对话记录里原来的每一轮都还在（日志只追加）；而 AI 的下一次请求里，它们已经变成那段摘要。Web UI 里这条摘要渲染成"压缩检查点"节点。
 
@@ -143,7 +152,7 @@ plugin_manager  remove_bundle  dsh-block-ptc
 
 - AI 跑什么都通过 `block_run_code`；
 - 收口时调用 `block_summary`，返回值形如 `{"replaced": 3, "tokensFreed": 346}` —— 替换了几条消息、被替换消息的估算 token 数（尚未扣除新摘要的开销）；
-- 一条 `[block:<id>] …` 的摘要节点出现在那几条消息原来的位置。
+- 一条 `<block-summary>…</block-summary>` 摘要节点出现在那几条消息原来的位置。
 
 如果某个工具调用被拒绝、提示 *"In block mode only `block_run_code` may be called directly"*，那是这个 preset 的守门规则在起作用：这个模式里其它工具都要在程序内部调用，和 PTC 模式一致。
 
@@ -153,24 +162,39 @@ plugin_manager  remove_bundle  dsh-block-ptc
 
 | 参数 | 类型 | 必填 | 含义 |
 |---|---|---|---|
-| `id` | string | 是 | block id，短而稳定的 slug，例如 `auth-refactor`。这个程序做的一切都归属它。 |
-| `description` | string | 是 | 一句话说明这块的目标。会作为该 block 的持久意图，并成为摘要的标题行。 |
+| `ids` | string[] | 是* | 本次工作的 block id 数组，非空、不重复，例如 `["auth-refactor"]`。 |
+| `id` | string | 否 | 旧参数，相当于 `ids: [id]`；两种写法二选一。 |
+| `description` | string | 是 | 一句话说明本次工作的目标，显示在工具行中。 |
 | `code` | string | 是 | 程序主体；支持顶层 `await` 和 `return`，`return` 的值即结果。 |
 | `timeoutMs` | number | 否 | 本次程序的执行预算（毫秒）。 |
 
-返回值就是 `run_code` 的结果原样：`{ logs, result?, sandbox? }`，渲染方式与 PTC 模式完全一致：浏览器半边把这次调用注册进 DSH 的键控 Tool 视图槽，画出与内置 `run_code` 相同的 `code` 行——标题「代码」、摘要 `[<block id>] <目标>`、展开后是程序原文与输出——程序里派发的每个 `bash`/`read`/`write` 卡片都嵌在这一行里。
+*使用旧参数 `id` 时可省略 `ids`。
+
+返回值就是 `run_code` 的结果原样：`{ logs, result?, sandbox? }`，渲染方式与 PTC 模式完全一致：浏览器半边把这次调用注册进 DSH 的键控 Tool 视图槽，画出与内置 `run_code` 相同的 `code` 行——标题「代码」、摘要 `[<block ids>] <目标>`、展开后是程序原文与输出——程序里派发的每个 `bash`/`read`/`write` 卡片都嵌在这一行里。
 
 ### 可调用 `tools.block_summary`
 
 | 参数 | 类型 | 必填 | 含义 |
 |---|---|---|---|
-| `id` | string | 是 | 要收口的 block。 |
-| `summary` | string | 是 | 由 AI 自己撰写。对该 block id 的所有内容进行总结整理，提交摘要替换原内容；文件路径等必要信息可按需保留。 |
+| `ids` | string[] | 是* | 本次要总结并收口的 block id 数组。 |
+| `id` | string | 否 | 旧参数，相当于 `ids: [id]`；两种写法二选一。 |
+| `summary` | string | 是 | 由你自己撰写。总结这些 ids 第一次到最后一次出现之间的完整内容。交代目标、已完成的工作及结果、未完成事项和下一步；如果只剩向用户报告结果，明确写出。按需保留必要细节。 |
 
-返回 `{ replaced, tokensFreed }`；若此刻还没有可替换的已提交内容，则返回 `{ replaced: 0, tokensFreed: 0, note }`。
-`replaced` 为零时不插入摘要。成功时摘要位于第一段连续可释放消息的起点；若 block
-首次出现的消息仍受保护，摘要不会占据那条消息的位置。
-`tokensFreed` 表示被替换消息的估算 token 数，不是净节省量；新摘要本身也占用 token。
+*使用旧参数 `id` 时可省略 `ids`。
+
+立即完成时返回 `{ replaced, tokensFreed, ids? }`，`ids` 是摘要继承的归属，仅在非空时返回。
+`tokensFreed` 是被替换消息的估算 token 数，尚未扣除新摘要的开销。
+
+工具结果或其他压缩尚未结束时，返回
+`{ replaced: 0, tokensFreed: 0, pending: true, requestSeq, note }`，表示已排队，
+尚未完成替换。成功的工具调用结果记录在日志中，恢复/fork 后可继续处理。
+延后提交失败会记录错误，目标归属在真正替换成功前仍保留。目标 id 不存在或
+区间包含受保护消息时，整次拒绝，不移除任何归属。
+
+摘要正文说明这是 Agent 自己对先前工作的总结，并使用独立的
+`<block-summary>…</block-summary>` 标签。还有剩余归属时显示 `Block ids`，
+为空时只保存在内部元数据，正文及返回值都不显示空 ids。该格式与 DSH 原生自动
+压缩区分，两者可以共存。
 
 ### 预设 `block-ptc`
 
@@ -200,11 +224,11 @@ compaction/end          释放锁
 
 这些是 DSH 自己的会话事件类型（`@deepseek-ai/dsh-compaction`、`@deepseek-ai/dsh-session`），不是这里另起的名字；插件也没法自造事件类型——那样会话日志会变得无法读取。**内置压缩引擎从未被调用**，也没有任何摘要模型调用：摘要是 AI 自己写的文本，这四条事件只是 DSH 对这次替换要求的登记手续。任何失败都必定补一次关闭，所以失败的摘要不会把持久锁留在会话里。
 
-**永不替换的东西。** 系统提示和所有 user 角色消息。落在 block 区间内的 user 消息会**切断**区间，而不是被一起压掉；正在执行中的那条 assistant 消息也被排除，因为它的 tool result 还没落盘。
+**保留的内容。** 系统、developer 和原始用户消息不会被替换；它们落在目标区间内时，整次拒绝。区间内 `tool-jobs` 的后台任务完成通知随工具输出一起总结，兼容宿主新版的 plugin 来源格式；其他插件消息仍受保护。插件自己的摘要检查点可以继续被总结。未完成的工具调用对会推迟整段提交，不能替换一部分却留下目标 id。
 
-**状态放在哪。** block 是按需从会话日志推导的——开块看 `tool/call`，收口看 `tool/ptc-dispatch-start`——所以会话之外不存任何东西，会话恢复（resume）和 fork 之后 block 依然有效。
+**状态放在哪。** `tool/call` 参数决定消息归属。提交的摘要在 `source.blockPtc` 中记录剩余 ids、已收口 ids 和请求序号；仅尝试调用 summary 不会收口。成功的排队结果可从日志恢复，`session/event` 监听器在 append 边界之外提交，无独立持久化存储。
 
-**为什么插件没有外部 import。** profile bundle 可以以符号链接方式安装；一个用裸包名 import `@deepseek-ai/dsh-*` 的插件，会因宿主的链接方式解析失败。本插件只 import `node:crypto`，放在哪都能加载。
+**为什么插件没有外部 import。** profile bundle 可以以符号链接方式安装；一个用裸包名 import `@deepseek-ai/dsh-*` 的插件，会因宿主的链接方式解析失败。唯一外部 import 是 Node 内置的 `node:crypto`，归属计算使用随包提供的相对模块。
 
 ## 验证
 
@@ -213,6 +237,11 @@ npm run check          # 语法检查 + 两个测试
 node tests/logic.test.mjs
 node tests/client.test.mjs
 ```
+
+`ids` 实现已通过上述离线回归，并用 DSH `0.2.0-rc.2` 自身的
+`Session` 完成追加与日志重放检查。可向 `tests/native-session.mjs` 传入已安装的
+`dsh-session/lib/index.js` 路径重现；ASAR 安装需使用桌面程序的
+`ELECTRON_RUN_AS_NODE=1` 模式。这不调用模型，也不代表真实界面验收。
 
 逻辑测试用假的 Cordis 上下文和假会话驱动**真实的插件入口**：工具注册、guard、嵌套 `run_code` 派发、完整的压缩事务、"失败也要释放锁"的路径，以及宿主层锚点行必须什么都不注册。客户端测试用打桩的浏览器模块表加载 `client/client.js`，把这一行在所有生命周期形态下渲染一遍——准备中、已派发、已结算、失败、被中断、参数不是合法 JSON——因为键控视图一旦抛错就会把那一个槽位清空。
 
@@ -251,9 +280,10 @@ node tests/client.test.mjs
 
 ## 已知边界
 
-- 一个 block 的范围是"开块的那次 `block_run_code`"到"收口的 `block_summary`"之间的全部内容。若期间另一个 block 一直开着，只会替换第一段连续可释放的内容，其余留给后来覆盖它的那次收口。
-- 摘要按设计是有损的：AI 没写进去的东西，之后就从它的上下文里消失了。
-- 一个 block 一次替换、一段摘要一条消息，没有"摘要的摘要"这种二级提纲。
+- 一次总结替换目标 id 最早到最晚出现的完整连续区间。区间内存在受保护的系统/用户/developer 消息时，整次拒绝，不跳过这些消息，也不只替换前一段。
+- 摘要是有损的，后续所需信息应写进摘要。
+- 摘要继承剩余 ids，可继续参与总结；`ids` 为空时仍保留已完成结果。
+- 兼容旧的 `id` 调用；已经压缩过的旧版本历史没有可恢复的 `ids` 归属元数据，不会被追溯重新标记。
 - block 是会话级的；子代理有自己的上下文和自己的 block。
 - `peerDependencies` 只声明最低版本，不设上限；允许更新宿主加载，事件语义、预设配置与浏览器接口仍需验证。
 
@@ -261,7 +291,8 @@ node tests/client.test.mjs
 
 ```
 .
-├── lib/plugin.js        插件全部代码（零外部 import）
+├── lib/plugin.js        宿主工具、排队请求与替换事务
+├── lib/blocks.js        消息归属与区间规划
 ├── cordis.patch.yml     bundle 补丁：新增一个 preset `block-ptc`
 ├── locale/{en,zh}.json  Harness UI 读取的显示文案
 ├── tests/logic.test.mjs 逻辑与事务测试

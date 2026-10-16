@@ -4,7 +4,7 @@
   "assumptions": [
     "Equal 4096-token fixed prefix in both presets; wrapper/schema/prompt overhead is normalized away.",
     "Four tasks, three requests per task; each new user instruction weighs 256 tokens; each completed assistant/tool pair weighs 2048.",
-    "Each summary weighs 512 tokens; compaction happens inside requests 3, 6, 9 and 12, without an extra request. User instructions and the closing in-flight pair remain.",
+    "Each summary weighs 512 tokens; compaction happens inside requests 3, 6, 9 and 12, without an extra request. The complete tool pair settles before the queued replacement; user instructions remain.",
     "Baseline is append-only PTC before its automatic compaction threshold is reached, not a comparison against every DSH compaction strategy.",
     "Ideal independent cache per arm: longest unchanged input prefix from earlier inputs, rounded down to 64-token units. No retention misses, cache build delay or contention.",
     "These are synthetic inputs and modeled cache hits, not real provider usage, speed, cost, quality or savings measurements."
@@ -145,13 +145,21 @@
     {
       "request": 4,
       "block": 2,
-      "inputTokens": 7168,
+      "inputTokens": 5120,
       "cacheHitTokens": 4352,
-      "cacheMissTokens": 2816,
+      "cacheMissTokens": 768,
       "afterSummary": true
     },
     {
       "request": 5,
+      "block": 2,
+      "inputTokens": 7168,
+      "cacheHitTokens": 5120,
+      "cacheMissTokens": 2048,
+      "afterSummary": false
+    },
+    {
+      "request": 6,
       "block": 2,
       "inputTokens": 9216,
       "cacheHitTokens": 7168,
@@ -159,58 +167,50 @@
       "afterSummary": false
     },
     {
-      "request": 6,
-      "block": 2,
-      "inputTokens": 11264,
-      "cacheHitTokens": 9216,
-      "cacheMissTokens": 2048,
-      "afterSummary": false
-    },
-    {
       "request": 7,
       "block": 3,
-      "inputTokens": 9984,
-      "cacheHitTokens": 7168,
-      "cacheMissTokens": 2816,
+      "inputTokens": 5888,
+      "cacheHitTokens": 5120,
+      "cacheMissTokens": 768,
       "afterSummary": true
     },
     {
       "request": 8,
       "block": 3,
-      "inputTokens": 12032,
-      "cacheHitTokens": 9984,
+      "inputTokens": 7936,
+      "cacheHitTokens": 5888,
       "cacheMissTokens": 2048,
       "afterSummary": false
     },
     {
       "request": 9,
       "block": 3,
-      "inputTokens": 14080,
-      "cacheHitTokens": 12032,
+      "inputTokens": 9984,
+      "cacheHitTokens": 7936,
       "cacheMissTokens": 2048,
       "afterSummary": false
     },
     {
       "request": 10,
       "block": 4,
-      "inputTokens": 12800,
-      "cacheHitTokens": 9984,
-      "cacheMissTokens": 2816,
+      "inputTokens": 6656,
+      "cacheHitTokens": 5888,
+      "cacheMissTokens": 768,
       "afterSummary": true
     },
     {
       "request": 11,
       "block": 4,
-      "inputTokens": 14848,
-      "cacheHitTokens": 12800,
+      "inputTokens": 8704,
+      "cacheHitTokens": 6656,
       "cacheMissTokens": 2048,
       "afterSummary": false
     },
     {
       "request": 12,
       "block": 4,
-      "inputTokens": 16896,
-      "cacheHitTokens": 14848,
+      "inputTokens": 10752,
+      "cacheHitTokens": 8704,
       "cacheMissTokens": 2048,
       "afterSummary": false
     }

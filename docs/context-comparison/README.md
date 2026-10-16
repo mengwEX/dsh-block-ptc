@@ -19,16 +19,17 @@ Block PTC 在任务收口时替换历史。示例调用真实插件的替换规�
 - The two panels use the same vertical scale and request numbers.
 - R3, R6 and R9 submit summaries inside their existing program executions.
   R4, R7 and R10 therefore show the smaller context and a partially cold prefix.
-- The current assistant/tool pair has not finished when its summary is written;
-  it remains after the replacement, as do all user messages. This is why the
-  Block PTC bars do not return to the fixed system prefix after each block.
+- When the summary is written inside an unfinished program, replacement waits
+  for the complete assistant/tool pair to settle and includes it. User messages
+  and the new summaries remain in subsequent input.
 - R12 also closes a block, but there is no R13 in the figure to show that effect.
 - The baseline has not reached its automatic compaction threshold. This does not
   compare Block PTC against every possible automatic/manual compaction policy.
 
 整根柱子是输入上下文，蓝色缓存命中和橙色未命中共同组成它。两图共享纵轴和请求
 序号。摘要写在 R3、R6、R9 已有程序内部，下一次请求才看到替换结果；收口请求中
-尚未完成的 assistant/tool 消息及所有用户消息仍保留。R12 也收口，但没有画出 R13。
+尚未完成的 assistant/tool 消息会等结果落地后一起替换，用户消息与摘要保留。
+R12 也收口，但没有画出 R13。
 原生 PTC 在本例中尚未达到内置自动压缩阈值，因此不能推广成对所有压缩策略的比较。
 
 ## Assumptions / 假设

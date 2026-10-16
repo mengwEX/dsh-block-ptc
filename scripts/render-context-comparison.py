@@ -30,7 +30,7 @@ texts = {
   'note1': 'Full bar = total input context. Cached tokens still occupy the context window.',
   'note2': 'Replacing history can invalidate its cached suffix: R4, R7 and R10 visibly rebuild part of the prefix.',
   'note3': 'Fixed prefix 4,096 · each user message 256 · each assistant/tool pair 2,048 · each summary 512 tokens.',
-  'note4': 'Closing in-flight pair and user messages stay. Ideal prefix cache only; no measured cost, latency or quality claim.',
+  'note4': 'Closing pair settles before replacement; user messages stay. Ideal cache model; no measured cost, latency or quality claim.',
  },
  'zh': {
   'eyebrow': '机制示意  /  人工指定 TOKEN 权重  /  非 API 实测',
@@ -47,7 +47,7 @@ texts = {
   'note1': '整根柱子 = 本次输入上下文。缓存命中的 token 仍占用上下文窗口。',
   'note2': '改写历史可能使后面的缓存前缀失效：R4、R7、R10 明确画出了重新构建的部分。',
   'note3': '固定前缀 4,096；每条用户消息 256；每对 assistant/tool 消息 2,048；每段摘要 512 token。',
-  'note4': '保留用户消息及收口时尚未完成的调用。缓存采用理想前缀模型，不代表实测费用、速度或质量。',
+  'note4': '调用对完成后整段替换，用户消息保留。理想缓存模型，不代表实测费用、速度或质量。',
  }
 }
 for lang, t in texts.items():

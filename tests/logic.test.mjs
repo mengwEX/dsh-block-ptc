@@ -1,274 +1,291 @@
-/**
- * Logic smoke test for dsh-block-ptc.
- *
- * Runs the real plugin entry against a fake Cordis context and fake sessions:
- * tool registration, the direct-call guard, the nested `run_code` dispatch and
- * the compaction transaction a `block_summary` commits.
- *
- * Scenario B mirrors a real session (captured live) whose surface starts with
- * the system prompt and carries several user messages inside the block span —
- * the two shapes that must never be replaced.
- *
- *   node tests/logic.test.mjs
- */
-
+/** Offline regression checks for membership, interval replacement and PTC integration. */
 import assert from 'node:assert/strict'
-import { apply } from '../lib/plugin.js'
+import { apply, __internals as core } from '../lib/plugin.js'
+import { summaryMetadata } from '../lib/blocks.js'
 
-const defs = new Map()
-const guards = []
-const sections = []
-const dispatched = []
-let appends = []
-
-const fakeCtx = {
-  tools: {
-    register: (definition) => {
-      defs.set(definition.name, definition)
-      return () => {}
+function harness() {
+  const defs = new Map(), guards = [], sections = [], dispatched = [], listeners = []
+  const ctx = {
+    tools: {
+      register: (def) => defs.set(def.name, def),
+      guard: (guard) => guards.push(guard),
+      execute: async (input) => { dispatched.push(input); return { isError: false, value: { logs: ['hello'], result: 1 } } },
     },
-    guard: (guard) => {
-      guards.push(guard)
-      return () => {}
-    },
-    execute: async (input) => {
-      dispatched.push(input)
-      return { isError: false, value: { logs: ['hello'], result: { ok: true } } }
-    },
-  },
-  systemPrompt: {
-    section: (section) => {
-      sections.push(section)
-      return () => {}
-    },
-  },
-  get: (name) => (name === 'tokenMeter' ? { estimateMessage: () => 10 } : undefined),
+    systemPrompt: { section: (section) => sections.push(section) },
+    get: () => ({ estimateMessage: () => 10 }),
+    on: (name, fn) => { assert.equal(name, 'session/event'); listeners.push(fn) },
+    logger: { warn: () => {} },
+  }
+  apply(ctx)
+  return { ctx, defs, guards, sections, dispatched, listeners }
 }
+const host = harness()
+const drain = async () => { await new Promise((resolve) => queueMicrotask(resolve)) }
 
-apply(fakeCtx)
-
-assert.deepEqual([...defs.keys()].sort(), ['block_run_code', 'block_summary'], 'both tools register')
-assert.equal(sections.length, 1, 'one prompt section registers')
-assert.equal(guards.length, 1, 'one guard registers')
-
-/** Build a fake session over an explicit event log and surface. */
-function makeSession(events, nodes, seq) {
-  return {
+/** Fake only persistence; append order, provenance, surface splice and observer reentry are checked. */
+function makeSession(listeners = host.listeners, seed = []) {
+  const events = [], nodes = []
+  let publishing = false
+  const session = {
     surface: { nodes },
-    seq,
-    snapshotEvents: () => events,
-    eventAt: (target) => events.find((event) => event.seq === target),
-    deriveEventMessage: () => ({ content: [{ type: 'text', text: 'x' }] }),
-    requestHeader: () => ({ config: { provider: 'test', model: 'test-model' } }),
-    append: (type, data, opts) => {
-      const event = { seq: 1000 + appends.length, type, data, ...(opts ?? {}) }
-      appends.push(event)
+    snapshotEvents: () => [...events],
+    eventAt: (seq) => events[seq],
+    deriveEventMessage: (event) => event.type === 'user/message' ? event.data : event.data.message,
+    requestHeader: () => ({ config: { provider: 'test', model: 'test' } }),
+    append(type, data, opts = {}) {
+      assert.equal(publishing, false, 'session append must not reenter observers')
+      const event = { seq: events.length, type, data: structuredClone(data), ...opts }
+      if (opts.surfaceOp?.op === 'replace') {
+        const first = nodes.indexOf(opts.surfaceOp.startSeq), last = nodes.indexOf(opts.surfaceOp.endSeq)
+        assert(first >= 0 && last >= first)
+        for (const seq of nodes.slice(first, last + 1)) assert(opts.sourceEventSeqs.includes(seq))
+        nodes.splice(first, last - first + 1, event.seq)
+      } else if (['system/message', 'developer/message', 'user/message', 'assistant/message', 'tool/result'].includes(type)) nodes.push(event.seq)
+      events.push(event)
+      publishing = true
+      try { for (const listener of listeners) listener(session, event) } finally { publishing = false }
       return event
     },
   }
+  for (const event of seed) session.append(event.type, event.data, {
+    ...(event.surfaceOp === undefined ? {} : { surfaceOp: event.surfaceOp }),
+    ...(event.sourceEventSeqs === undefined ? {} : { sourceEventSeqs: event.sourceEventSeqs }),
+  })
+  return session
+}
+function work(session, ids, step, complete = true, legacy = false) {
+  const callId = `c${step}`
+  session.append('step/start', { turn: 1, step })
+  session.append('assistant/message', { turn: 1, step, message: { role: 'assistant', content: [
+    { type: 'text', text: `thinking and content before ${callId}` }, { type: 'tool-call', id: callId },
+  ] } })
+  session.append('tool/call', { turn: 1, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ...(legacy ? { id: ids[0] } : { ids }), description: ids.join(','), code: 'return 1' }) })
+  if (complete) result(session, step)
+}
+function result(session, step) {
+  session.append('tool/result', { turn: 1, step, message: { role: 'tool', toolCallId: `c${step}`, source: { kind: 'tool', callId: `c${step}` }, content: [{ type: 'text', text: 'result' }] } })
+}
+function sequence(text, listeners = host.listeners) {
+  const session = makeSession(listeners)
+  session.append('system/message', { message: { role: 'system', content: [{ type: 'text', text: 'system' }] } })
+  session.append('user/message', { role: 'user', content: [{ type: 'text', text: 'task' }] })
+  session.append('turn/start', { turn: 1 })
+  ;[...text].forEach((id, index) => work(session, [id], index + 1))
+  return session
+}
+function layout(session) {
+  return core.surfaceView(session).filter((row) => row.event.type === 'assistant/message' || summaryMetadata(row.event)).map((row) =>
+    summaryMetadata(row.event) ? `S[${row.ids.join(',')}]` : row.ids.join(','),
+  ).join(' ')
+}
+async function summarize(session, ids, legacy = false) {
+  return host.defs.get('block_summary').execute({ ...(legacy ? { id: ids[0] } : { ids }), summary: `Summary of ${ids.join(',')}` }, { agent: { session }, callId: 'manual' })
 }
 
-// ── scenario A: one block opened and closed across two turns ────────────────
+// The exact agreed examples, subsequent summaries, non-monotonic seq order and replay.
 {
-  appends = []
-  const events = [
-    { seq: 0, type: 'system/message', data: {} },
-    { seq: 1, type: 'turn/start', data: { turn: 1 } },
-    { seq: 2, type: 'step/start', data: { turn: 1, step: 1 } },
-    { seq: 3, type: 'user/message', data: { role: 'user' } },
-    { seq: 4, type: 'assistant/message', data: { turn: 1, step: 1, message: { content: [{ type: 'tool-call' }] } } },
-    { seq: 5, type: 'tool/call', data: { turn: 1, step: 1, callId: 'c1', name: 'block_run_code', arguments: '{"id":"a","description":"goal A"}' } },
-    { seq: 6, type: 'tool/result', data: { turn: 1, step: 1, message: {} } },
-    { seq: 7, type: 'turn/end', data: { turn: 1 } },
-    { seq: 8, type: 'turn/start', data: { turn: 2 } },
-    { seq: 9, type: 'step/start', data: { turn: 2, step: 1 } },
-    { seq: 10, type: 'assistant/message', data: { turn: 2, step: 1, message: { content: [{ type: 'tool-call' }] } } },
-    { seq: 11, type: 'tool/call', data: { turn: 2, step: 1, callId: 'c2', name: 'block_run_code', arguments: '{"id":"a","description":"goal A"}' } },
-    {
-      seq: 12,
-      type: 'tool/ptc-dispatch-start',
-      data: { subCallId: 'c2:ptc:1', name: 'block_summary', arguments: { id: 'a', summary: 'handover' } },
-    },
-  ]
-  const session = makeSession(events, [0, 3, 4, 6, 10], 13)
-  const exec = {
-    callId: 'c2:ptc:1',
-    rootCallId: 'c2',
-    token: 'TOKEN',
-    agent: { session },
-    signal: new AbortController().signal,
-  }
-  const result = await defs.get('block_summary').execute({ id: 'a', summary: 'handover' }, exec)
-  assert.deepEqual(result, { replaced: 2, tokensFreed: 20 }, 'A: replaces the block\'s own completed steps')
-  assert.deepEqual(
-    appends.map((event) => event.type),
-    ['compaction/start', 'compaction/summary', 'user/message', 'compaction/end'],
-    'A: commits one compaction transaction in the contractual order',
-  )
-  const [start, summary, replacement, end] = appends
-  assert.equal(start.data.turn, 2, 'A: bracket is owned by the open turn')
-  assert.deepEqual(summary.data.shadowedRange, { start: 4, end: 6 }, 'A: shadow price covers the replaced surface span')
-  assert.equal(summary.data.shadowedTokenCount, 20, 'A: shadow price carries the metered token count')
-  assert.deepEqual(replacement.surfaceOp, { op: 'replace', startSeq: 4, endSeq: 6 }, 'A: replacement shadows exactly that span')
-  assert.deepEqual(replacement.sourceEventSeqs, [start.seq, summary.seq, 4, 6], 'A: replacement cites the bracket and every shadowed node')
-  assert.equal(replacement.data.source.kind, 'compact-checkpoint', 'A: replacement is a recognizable compaction checkpoint')
-  assert.equal(end.data.compactionId, start.data.compactionId, 'A: end closes the same transaction')
+  const session = sequence('AABAB')
+  const value = await summarize(session, ['A'])
+  assert.equal(value.replaced, 8)
+  assert.deepEqual(value.ids, ['B'])
+  assert.equal(layout(session), 'S[B] B')
+  assert(!core.surfaceView(session).some((row) => row.ids.includes('A')))
+  const text = core.surfaceView(session).find((row) => summaryMetadata(row.event)).event.data.content[0].text
+  assert(text.includes('<block-summary>\nBlock ids: ["B"]\n\nSummary of A\n</block-summary>'))
+  assert(!text.includes('compacted-summary'))
+}
+{
+  const session = sequence('AABACB')
+  const originals = JSON.stringify(session.snapshotEvents())
+  await summarize(session, ['A'])
+  assert.equal(layout(session), 'S[B] C B')
+  assert(JSON.stringify(session.snapshotEvents()).startsWith(originals.slice(0, -1)), 'original complete messages stay in the durable log')
+  const replay = makeSession([], structuredClone(session.snapshotEvents()))
+  assert.equal(layout(replay), 'S[B] C B')
+  await summarize(replay, ['B'])
+  assert.equal(layout(replay), 'S[C]')
+  await summarize(replay, ['C'])
+  assert.equal(layout(replay), 'S[]', 'the finished summary is retained when its ids are empty')
+  assert.deepEqual(core.surfaceView(replay).filter((row) => row.ids.length > 0), [])
+}
+// Empty memberships stay in metadata; the model sees one summary without an empty ids label.
+{
+  const session = sequence('A')
+  const value = await summarize(session, ['A'])
+  const message = session.eventAt(session.surface.nodes.at(-1)).data
+  assert.deepEqual(summaryMetadata(session.eventAt(session.surface.nodes.at(-1))).ids, [])
+  assert.equal(Object.hasOwn(value, 'ids'), false)
+  assert.equal(message.content[0].text.split('Summary of A').length - 1, 1)
+  assert(message.content[0].text.includes('<block-summary>\nSummary of A\n</block-summary>'))
+  assert(!message.content[0].text.includes('Block ids:'))
+  assert(!message.content[0].text.includes('ids=[]'))
+}
+{
+  const session = sequence('AABACB')
+  await summarize(session, ['A', 'B'])
+  assert.equal(layout(session), 'S[C]')
+}
+// Shared messages transfer all remaining memberships; old id calls remain valid.
+{
+  const session = sequence('')
+  work(session, ['A', 'B'], 1)
+  work(session, ['C'], 2)
+  work(session, ['A'], 3, true, true)
+  await summarize(session, ['A'], true)
+  assert.equal(layout(session), 'S[B,C]')
+  const meta = summaryMetadata(session.eventAt(session.surface.nodes.at(-1)))
+  assert.deepEqual(meta.closedIds, ['A'])
+}
+// Multi-call assistant messages and all their results form one indivisible group.
+{
+  const session = sequence('')
+  const data = { turn: 1, step: 1 }
+  session.append('assistant/message', { ...data, message: { content: [{ type: 'text', text: 'reasoning' }, { type: 'tool-call', id: 'a' }, { type: 'tool-call', id: 'b' }] } })
+  for (const id of ['A', 'B']) session.append('tool/call', { ...data, callId: id.toLowerCase(), name: 'block_run_code', arguments: JSON.stringify({ ids: [id] }) })
+  for (const id of ['a', 'b']) session.append('tool/result', { ...data, message: { source: { callId: id }, content: [] } })
+  assert.deepEqual(core.surfaceView(session).filter((row) => row.ids.length).map((row) => row.ids), [['A', 'B'], ['A', 'B'], ['A', 'B']])
+  const value = await summarize(session, ['A'])
+  assert.equal(value.replaced, 3)
+  assert.equal(layout(session), 'S[B]')
+}
+// Job completion notices participate in the interval, including replay and token accounting.
+for (const source of [
+  { kind: 'tool-jobs', form: 'notice' },
+  { kind: 'plugin', plugin: 'tool-jobs', form: 'notice' },
+]) {
+  const session = sequence('A')
+  const notice = session.append('user/message', { role: 'user', source, content: [{ type: 'text', text: 'background job finished; read its output with job_output' }] })
+  work(session, ['B'], 2)
+  work(session, ['A'], 3)
+  const value = await summarize(session, ['A'])
+  assert.equal(value.replaced, 7)
+  assert.equal(value.tokensFreed, 70)
+  assert.equal(layout(session), 'S[B]')
+  assert(!session.surface.nodes.includes(notice.seq))
+  assert.deepEqual(session.eventAt(notice.seq).data.source, source, 'the original notice remains in the log')
+  const replay = makeSession([], session.snapshotEvents())
+  assert.equal(layout(replay), 'S[B]')
+}
+// Human instructions, unknown plugin messages and non-notice job messages remain protected.
+for (const source of [undefined, { kind: 'human' }, { kind: 'tool-jobs' }, { kind: 'plugin', plugin: 'other', form: 'notice' }]) {
+  const session = sequence('A')
+  session.append('user/message', { role: 'user', source, content: [{ type: 'text', text: 'keep this instruction' }] })
+  work(session, ['A'], 2)
+  const before = session.snapshotEvents().length
+  await assert.rejects(summarize(session, ['A']), /protected/)
+  assert.equal(session.snapshotEvents().length, before)
+}
+// A protected message refuses the entire operation; never replace only a prefix.
+{
+  const session = sequence('A')
+  session.append('assistant/message', { turn: 1, step: 2, message: { content: [
+    { type: 'tool-call', id: 'b', name: 'block_run_code', arguments: '{"ids":["B"]}' },
+    { type: 'tool-call', id: 'a', name: 'block_run_code', arguments: '{"ids":["A"]}' },
+  ] } })
+  assert.equal(core.planReplacement(session, ['A']).kind, 'pending', 'a not-yet-dispatched call still contributes to its whole message')
+  assert.deepEqual(core.surfaceView(session).at(-1).ids, ['B', 'A'])
 }
 
-// ── scenario B: the system prompt and user messages are never replaced ──────
+// A protected message refuses the entire operation; never replace only a prefix.
 {
-  appends = []
-  const events = [
-    { seq: 1, type: 'turn/start', data: { turn: 1 } },
-    { seq: 2, type: 'step/start', data: { turn: 1, step: 1 } },
-    // The system prompt is appended inside step 1 and therefore carries turn 1 / step 1.
-    { seq: 9, type: 'system/message', data: { turn: 1, step: 1, message: { content: [] } } },
-    { seq: 10, type: 'user/message', data: { role: 'user', content: [{ type: 'text', text: 'prompt 1' }] } },
-    { seq: 12, type: 'user/message', data: { role: 'user', content: [{ type: 'text', text: 'injected context' }] } },
-    { seq: 19, type: 'assistant/message', data: { turn: 1, step: 1, message: { content: [{ type: 'tool-call' }] } } },
-    { seq: 20, type: 'tool/call', data: { turn: 1, step: 1, callId: 'c1', name: 'block_run_code', arguments: '{"id":"smoke","description":"goal"}' } },
-    { seq: 29, type: 'tool/result', data: { turn: 1, step: 1, message: {} } },
-    { seq: 33, type: 'assistant/message', data: { turn: 1, step: 2, message: { content: [{ type: 'text', text: 'answer 1' }] } } },
-    { seq: 44, type: 'user/message', data: { role: 'user', content: [{ type: 'text', text: 'prompt 2' }] } },
-    { seq: 45, type: 'step/start', data: { turn: 2, step: 1 } },
-    { seq: 46, type: 'assistant/message', data: { turn: 2, step: 1, message: { content: [{ type: 'tool-call' }] } } },
-    { seq: 47, type: 'tool/call', data: { turn: 2, step: 1, callId: 'c2', name: 'block_run_code', arguments: '{"id":"closer","description":"close"}' } },
-    {
-      seq: 52,
-      type: 'tool/ptc-dispatch-start',
-      data: { subCallId: 'c2:ptc:1', name: 'block_summary', arguments: { id: 'smoke', summary: 'handover' } },
-    },
-  ]
-  const session = makeSession(events, [9, 10, 12, 19, 29, 33, 44, 46], 53)
-  const exec = { callId: 'c2:ptc:1', rootCallId: 'c2', token: 'TOKEN', agent: { session }, signal: new AbortController().signal }
-  const result = await defs.get('block_summary').execute({ id: 'smoke', summary: 'handover' }, exec)
-  assert.deepEqual(result, { replaced: 3, tokensFreed: 30 }, 'B: replaces the model work only')
-  const summary = appends[1]
-  assert.deepEqual(
-    summary.data.shadowedSeqs,
-    [19, 29, 33],
-    'B: the system prompt (seq 9) and both user messages (10, 12, 44) stay',
-  )
-  assert.deepEqual(summary.data.shadowedRange, { start: 19, end: 33 }, 'B: the replaced span never starts at node 0')
+  const session = sequence('A')
+  session.append('user/message', { role: 'user', content: [{ type: 'text', text: 'keep this instruction' }] })
+  work(session, ['A'], 2)
+  const before = session.snapshotEvents().length
+  await assert.rejects(summarize(session, ['A']), /protected/)
+  assert.equal(session.snapshotEvents().length, before)
+  assert.equal(layout(session), 'A A')
+  await assert.rejects(summarize(session, ['A', 'missing']), /no current content/)
+  assert.equal(session.snapshotEvents().length, before)
 }
-
-// ── scenario C: a failed replacement still releases the compaction lock ─────
+// A rejected replacement releases its lock and leaves every target open for retry.
 {
-  appends = []
-  const events = [
-    { seq: 0, type: 'turn/start', data: { turn: 1 } },
-    { seq: 1, type: 'step/start', data: { turn: 1, step: 1 } },
-    { seq: 2, type: 'assistant/message', data: { turn: 1, step: 1, message: { content: [{ type: 'tool-call' }] } } },
-    { seq: 3, type: 'tool/call', data: { turn: 1, step: 1, callId: 'c1', name: 'block_run_code', arguments: '{"id":"a","description":"goal A"}' } },
-    { seq: 4, type: 'tool/result', data: { turn: 1, step: 1, message: {} } },
-    { seq: 5, type: 'step/start', data: { turn: 1, step: 2 } },
-    { seq: 6, type: 'assistant/message', data: { turn: 1, step: 2, message: { content: [{ type: 'tool-call' }] } } },
-    { seq: 7, type: 'tool/call', data: { turn: 1, step: 2, callId: 'c2', name: 'block_run_code', arguments: '{"id":"a","description":"goal A"}' } },
-    { seq: 8, type: 'tool/ptc-dispatch-start', data: { subCallId: 'c2:ptc:1', name: 'block_summary', arguments: { id: 'a', summary: 's' } } },
-  ]
-  const session = makeSession(events, [2, 4, 6], 9)
+  const session = sequence('ABA')
   const append = session.append
-  session.append = (type, data, opts) => {
-    if (type === 'user/message') throw new Error('surface replace: simulated rejection')
-    return append(type, data, opts)
+  session.append = (type, data, opts) => { if (opts?.surfaceOp?.op === 'replace') throw new Error('simulated rejection'); return append(type, data, opts) }
+  await assert.rejects(summarize(session, ['A']), /simulated rejection/)
+  assert.equal(layout(session), 'A B A')
+  assert.equal(session.snapshotEvents().at(-1).type, 'compaction/end')
+  assert.equal(session.snapshotEvents().at(-1).data.error, 'simulated rejection')
+  session.append = append
+  await summarize(session, ['A'])
+  assert.equal(layout(session), 'S[B]')
+}
+function invocation(session, step, ids) {
+  return session.append('tool/ptc-dispatch-start', { subCallId: `c${step}:ptc:1`, name: 'block_summary', arguments: { ids, summary: 'handover' } })
+}
+function outcome(session, step, ids, value, isError = false) {
+  session.append('tool/ptc-dispatch', { subCallId: `c${step}:ptc:1`, name: 'block_summary', arguments: { ids, summary: 'handover' }, isError, content: host.defs.get('block_summary').output.render({}, value) })
+}
+// A summary of its own running program waits; it includes that program when it settles.
+{
+  const session = sequence('AAB')
+  work(session, ['A'], 4, false)
+  invocation(session, 4, ['A'])
+  const value = await host.defs.get('block_summary').execute({ ids: ['A'], summary: 'handover' }, { agent: { session }, callId: 'c4:ptc:1' })
+  assert.equal(value.pending, true)
+  outcome(session, 4, ['A'], value)
+  await drain()
+  assert.equal(layout(session), 'A A B A')
+  result(session, 4)
+  await drain()
+  assert.equal(layout(session), 'S[B]')
+  assert.equal(core.pendingSummaries(session).length, 0)
+  assert.equal(core.surfaceView(session).filter((row) => row.ids.includes('A')).length, 0)
+}
+// Starts and failed dispatches never close a block. Queued success survives a restart/fork.
+{
+  const session = sequence('A', [])
+  work(session, ['A'], 2, false)
+  const request = invocation(session, 2, ['A'])
+  assert.equal(core.pendingSummaries(session).length, 0)
+  outcome(session, 2, ['A'], { pending: true, requestSeq: request.seq }, true)
+  assert.equal(core.pendingSummaries(session).length, 0)
+  outcome(session, 2, ['A'], { pending: true, requestSeq: request.seq })
+  const resumed = makeSession(host.listeners, structuredClone(session.snapshotEvents()))
+  result(resumed, 2)
+  await drain()
+  assert.equal(layout(resumed), 'S[]')
+  core.flushPending(host.ctx, resumed)
+  assert.equal(layout(resumed), 'S[]', 'a committed request cannot insert another summary')
+}
+// Native compaction and this plugin do not overlap their transaction brackets.
+{
+  const session = sequence('A')
+  session.append('compaction/start', { compactionId: 'native', turn: 1 })
+  const request = invocation(session, 1, ['A'])
+  const value = await host.defs.get('block_summary').execute({ ids: ['A'], summary: 'handover' }, { agent: { session }, callId: 'c1:ptc:1' })
+  assert.equal(value.pending, true)
+  outcome(session, 1, ['A'], value)
+  await drain()
+  assert.equal(layout(session), 'A')
+  session.append('compaction/end', { compactionId: 'native', turn: 1 })
+  await drain()
+  assert.equal(layout(session), 'S[]')
+  assert.equal(summaryMetadata(session.eventAt(session.surface.nodes.at(-1))).requestSeq, request.seq)
+}
+// Transport, schema, input validation, guard and discovery-anchor boundaries.
+{
+  assert.deepEqual([...host.defs.keys()], ['block_run_code', 'block_summary'])
+  assert.equal(host.sections.length, 1)
+  assert(!/first eligible|injection|at the start|one block open/.test(host.sections[0].text))
+  for (const name of ['block_run_code', 'block_summary']) {
+    for (const args of [{ ids: [] }, { ids: [''] }, { ids: ['A', 'A'] }, { ids: ['A'], id: 'A' }, {}]) {
+      await assert.rejects(host.defs.get(name).execute({ ...args, description: 'goal', code: 'return 1', summary: 's' }, { agent: { session: sequence('A') } }), /ids|legacy/)
+    }
   }
-  const exec = { callId: 'c2:ptc:1', rootCallId: 'c2', token: 'TOKEN', agent: { session }, signal: new AbortController().signal }
-  await assert.rejects(
-    () => defs.get('block_summary').execute({ id: 'a', summary: 's' }, exec),
-    /simulated rejection/,
-    'C: a rejected replacement surfaces to the caller',
-  )
-  assert.deepEqual(
-    appends.map((event) => event.type),
-    ['compaction/start', 'compaction/summary', 'compaction/end'],
-    'C: every failure makes exactly one close attempt',
-  )
-  assert.equal(appends[2].data.error, 'surface replace: simulated rejection', 'C: the close records the failure')
-  assert.equal(appends[2].data.compactionId, appends[0].data.compactionId, 'C: the failing bracket is the one released')
+  const value = await host.defs.get('block_run_code').execute({ ids: ['A', 'B'], description: 'goal', code: 'return 1' }, { callId: 'outer', rootCallId: 'outer', token: 'token' })
+  assert.deepEqual(value, { logs: ['hello'], result: 1 })
+  assert.equal(host.dispatched.at(-1).callId, 'outer')
+  assert.equal(host.dispatched.at(-1).parent, 'token')
+  assert.equal(host.dispatched.at(-1).arguments.description, '[block:A,B] goal')
+  const guard = host.guards[0]
+  assert.equal(guard({ name: 'block_run_code' }), undefined)
+  assert.equal(guard({ name: 'read', parent: 'token' }), undefined)
+  assert.match(guard({ name: 'read' }), /only `block_run_code`/)
+  apply({}, { anchor: true })
+  assert.throws(() => apply({ ...host.ctx, tools: {} }), /incompatible DSH host API/)
+  await assert.rejects(summarize({ surface: { nodes: [] } }, ['A']), /incompatible DSH session API/)
 }
-
-// ── the transport tool forwards the program to the built-in run_code ─────────
-{
-  const forwarded = await defs.get('block_run_code').execute(
-    { id: 'a', description: 'goal A', code: 'return 1' },
-    { callId: 'c3', rootCallId: 'c3', token: 'TOKEN2', agent: { session: {} }, signal: new AbortController().signal },
-  )
-  assert.deepEqual(forwarded, { logs: ['hello'], result: { ok: true } }, 'run_code result is forwarded verbatim')
-  assert.equal(dispatched.length, 1, 'exactly one nested dispatch')
-  assert.equal(dispatched[0].name, 'run_code', 'the nested dispatch is the built-in transport')
-  assert.equal(dispatched[0].parent, 'TOKEN2', 'nested dispatch carries the transport parent token')
-  // Rendering contract: the PTC bridge parents every program sub-call at the
-  // executing call's id, and the conversation UI only hangs sub-calls off a call
-  // node it can see. The nested transport must therefore reuse the outer id, not
-  // invent a synthetic parent node that never appears in the transcript.
-  assert.equal(dispatched[0].callId, 'c3', 'the nested transport reuses the outer call id')
-  assert.equal(dispatched[0].rootCallId, 'c3', 'the nested transport keeps the outer root call id')
-  assert.equal(dispatched[0].arguments.description, '[block:a] goal A', 'block id is visible to the transport log')
-}
-
-// ── the guard narrows direct calls to the transport tool ─────────────────────
-{
-  const guard = guards[0]
-  assert.equal(guard({ name: 'block_run_code' }), undefined, 'the transport tool may be called directly')
-  assert.equal(guard({ name: 'read', parent: 'TOKEN' }), undefined, 'nested sub-calls stay allowed')
-  assert.match(guard({ name: 'read' }), /only `block_run_code` may be called directly/i, 'a direct call is denied')
-  assert.match(guard({ name: 'run_code' }), /block_run_code/, 'the built-in transport is denied directly too')
-}
-
-// ── the host-level discovery anchor registers nothing ───────────────────────
-{
-  const anchorTools = []
-  const anchorGuards = []
-  const anchorSections = []
-  const anchorCtx = {
-    tools: {
-      register: (definition) => {
-        anchorTools.push(definition.name)
-        return () => {}
-      },
-      guard: (guard) => {
-        anchorGuards.push(guard)
-        return () => {}
-      },
-      execute: async () => {
-        throw new Error('the discovery anchor must not dispatch')
-      },
-    },
-    systemPrompt: {
-      section: (section) => {
-        anchorSections.push(section)
-        return () => {}
-      },
-    },
-    get: () => undefined,
-  }
-  apply(anchorCtx, { anchor: true })
-  assert.deepEqual(anchorTools, [], 'the discovery anchor registers no tools')
-  assert.deepEqual(anchorGuards, [], 'the discovery anchor installs no direct-call guard')
-  assert.deepEqual(anchorSections, [], 'the discovery anchor adds no prompt section')
-}
-
-// ── incompatible hosts fail before registering or appending anything ───────
-{
-  const before = [defs.size, guards.length, sections.length]
-  assert.throws(
-    () => apply({ ...fakeCtx, tools: { ...fakeCtx.tools, execute: undefined } }),
-    /incompatible DSH host API; missing tools\.execute/,
-  )
-  assert.deepEqual([defs.size, guards.length, sections.length], before, 'an incompatible host is not partially mounted')
-
-  let inspected = false
-  const session = {
-    surface: { nodes: [] },
-    snapshotEvents: () => { inspected = true; return [] },
-    eventAt: () => undefined,
-    deriveEventMessage: () => null,
-  }
-  await assert.rejects(
-    defs.get('block_summary').execute({ id: 'a', summary: 'handover' }, { agent: { session } }),
-    /incompatible DSH session API; missing append/,
-  )
-  assert.equal(inspected, false, 'a session without append is rejected before inspecting its history')
-}
-
+await drain()
 console.log('dsh-block-ptc logic test: OK')
