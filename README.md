@@ -84,7 +84,7 @@ await tools.block_summary({ ids, summary })    callable from inside a program
 3. The summary inherits the union of the interval's ids minus the target ids.
    It can participate in a later summary. A summary with no remaining ids stays.
 4. If a tool pair in the interval is unfinished, the request is queued until
-   its result lands. A protected system/user/developer message refuses the
+   its result lands. A protected system/developer message refuses the
    entire interval; no prefix is silently replaced.
 
 ```text
@@ -226,7 +226,7 @@ the program dispatches nested inside it.
 |---|---|---|---|
 | `ids` | string[] | yes* | Block ids to summarize and close. |
 | `id` | string | no | Legacy alias for `ids: [id]`. Supply either form, not both. |
-| `summary` | string | yes | Written by the model. Summarize the complete first-to-last interval for these ids. State the goal, completed work and results, unfinished work, and next step; if only reporting to the user remains, say so. Retain necessary details as appropriate. |
+| `summary` | string | yes | Written by the model. Summarize the complete first-to-last interval for these ids. Preserve intervening user requirements, corrections and constraints. State the goal, completed work and results, unfinished work, and next step; if only reporting to the user remains, say so. Retain necessary details as appropriate. |
 
 *`ids` is required unless the legacy `id` is supplied.
 
@@ -312,13 +312,13 @@ summary is the model's own text, and these four events are only the bookkeeping
 DSH requires for the replacement. Every failure makes exactly one close attempt,
 so a failed summary can never leave the durable lock behind.
 
-**What is preserved.** System, developer and original user messages are never
-replaced. If they occur inside the target interval, the entire operation is
-refused. Background-job completion notices from `tool-jobs` inside the interval
-are summarized with tool output, including hosts that use the newer plugin
-source format. Other plugin messages stay protected. Our own summary checkpoints
-may be replaced again. Unfinished tool
-pairs delay the complete replacement rather than leaving a target-id suffix.
+**What is preserved.** System and developer messages are never replaced; an
+interval containing them is refused. User follow-ups and tool notices inside
+the interval are summarized with the work. The summary must preserve added
+requirements, corrections and constraints. Messages outside the interval stay.
+A user message arriving after the model wrote the summary is not discarded:
+the old summary is refused and must be updated after reading the new message.
+Unfinished tool pairs delay the complete replacement.
 
 **Where the state lives.** `tool/call` arguments assign message memberships.
 Committed summary checkpoints carry the remaining ids, closed ids and request
@@ -393,6 +393,7 @@ The same transaction was replayed offline through the runtime's own
 | The preset is missing from the picker | The bundle is not in `dsh.profile.bundles`, or the host has not recomposed. Check `plugin_manager list_bundles`, then restart. |
 | The preset shows as broken / *"dsh-block-ptc: never started"* | The plugin module failed to import (usually a package-resolution problem for a linked checkout). Fix the layout, then restart. |
 | No `block_run_code` in a session | The session is not running the `block-ptc` preset, or the app has not been restarted since installing. |
+| New summaries still use `[block-summary ids=[]]` | The host is running an old module generation. Update the bundle and fully quit/reopen DSH. Existing historical summaries keep their original text. |
 | Edits to the plugin do not take effect | Modules are cached per URL and module watching is off by default: restart the app. |
 | A block never gets compressed | It was never closed with `block_summary`, so its content stays until automatic compaction folds it into a generic summary. |
 | Compaction stops working in a session | A `compaction/start` without a matching `compaction/end` is the durable lock. This plugin closes its own bracket on every failure; if you hit it from an older build, start a fresh session. |
@@ -400,7 +401,7 @@ The same transaction was replayed offline through the runtime's own
 ## Known limits
 
 - One summary replaces one complete contiguous first-to-last interval. A
-  protected system/user/developer message rejects that interval; it is not
+  protected system/developer message rejects that interval; it is not
   skipped and no prefix is treated as a completed summary.
 - Summaries are lossy: necessary information must be included in their text.
 - Checkpoints inherit remaining ids and may be summarized again. A checkpoint

@@ -24,7 +24,9 @@ See the [README](README.md#install) for installation details.
 - Keep changes focused and explain the problem and resulting behavior.
 - Delegate program execution to the built-in PTC transport. Keep block state
   derived from the session log rather than adding a second persistence layer.
-- Preserve system/user messages and paired tool calls when replacing history.
+- Preserve system/developer messages and paired tool calls when replacing history.
+  User follow-ups inside the target interval participate in the summary; never
+  discard messages arriving after the model wrote that summary.
 - Use the `ids` API while preserving the legacy single-string `id` alias.
   Peer dependencies express minimum versions
   without upper bounds; check required host capabilities and record live

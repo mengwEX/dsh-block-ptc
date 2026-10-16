@@ -32,5 +32,5 @@ The npm mapping is collected from registry metadata; no `npm` key is added.
 仅新增一个 YAML 条目。仓库已满足创建满 24 小时的要求。提交不等于收录；
 是否合并及市场同步时间取决于维护者和目录工作流。
 
-Release: [v0.2.1](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.2.1).
+Release: [v0.2.2](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.2.2).
 Package: [dsh-block-ptc on npm](https://www.npmjs.com/package/dsh-block-ptc).

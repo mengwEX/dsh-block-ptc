@@ -26,13 +26,19 @@ function sessionFor(ids, noticeSource) {
   session.append('system/message', { turn: 1, step: 1, message: { id: 'sys', role: 'system', source: { kind: 'system-prompt' }, content: [{ type: 'text', text: 'system' }] } }, { surfaceOp: 'append' })
   session.append('user/message', { id: 'user', role: 'user', source: { kind: 'human' }, content: [{ type: 'text', text: 'task' }] }, { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
+  let turn = 1
   for (const [i, id] of [...ids].entries()) {
     if (i === 1 && noticeSource) session.append('user/message', { id: 'job-notice', role: 'user', source: noticeSource, content: [{ type: 'text', text: 'background job finished; read its output with job_output' }] }, { surfaceOp: 'append' })
+    if (i === 1 && noticeSource?.kind === 'user') {
+      session.append('turn/end', { turn: 1 })
+      turn = 2
+      session.append('turn/start', { turn })
+    }
     const step = i + 1, callId = `c${step}`
-    session.append('step/start', { turn: 1, step })
-    session.append('assistant/message', { turn: 1, step, stream: [], message: { id: `a${step}`, role: 'assistant', source: { kind: 'model', provider: 'test', model: 'offline' }, content: [{ type: 'text', text: 'thinking before call' }, { type: 'tool-call', id: callId, name: 'block_run_code', arguments: '{}' }] } }, { surfaceOp: 'append' })
-    session.append('tool/call', { turn: 1, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ids: [id] }) })
-    session.append('tool/result', { turn: 1, step, message: { id: `r${step}`, role: 'tool', toolCallId: callId, source: { kind: 'tool', callId }, content: [{ type: 'text', text: 'output' }] } }, { surfaceOp: 'append' })
+    session.append('step/start', { turn, step })
+    session.append('assistant/message', { turn, step, stream: [], message: { id: `a${step}`, role: 'assistant', source: { kind: 'model', provider: 'test', model: 'offline' }, content: [{ type: 'text', text: 'thinking before call' }, { type: 'tool-call', id: callId, name: 'block_run_code', arguments: '{}' }] } }, { surfaceOp: 'append' })
+    session.append('tool/call', { turn, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ids: [id] }) })
+    session.append('tool/result', { turn, step, message: { id: `r${step}`, role: 'tool', toolCallId: callId, source: { kind: 'tool', callId }, content: [{ type: 'text', text: 'output' }] } }, { surfaceOp: 'append' })
   }
   return session
 }
@@ -48,7 +54,7 @@ assert.equal(core.surfaceView(session).filter((row) => summaryMetadata(row.event
 assert.deepEqual(core.surfaceView(session).at(-1).ids, [])
 console.log('Native DSH Session append and replay: OK (offline, no API)')
 
-for (const source of [{ kind: 'tool-jobs', form: 'notice' }, { kind: 'plugin', plugin: 'tool-jobs', form: 'notice' }]) {
+for (const source of [{ kind: 'user' }, { kind: 'tool-jobs', form: 'notice' }, { kind: 'plugin', plugin: 'tool-jobs', form: 'notice' }]) {
   const session = sessionFor('ABA', source)
   const notice = session.snapshotEvents().find((event) => event.data?.id === 'job-notice')
   const plan = core.planReplacement(session, ['A'])
@@ -59,4 +65,4 @@ for (const source of [{ kind: 'tool-jobs', form: 'notice' }, { kind: 'plugin', p
   assert.deepEqual(core.surfaceView(replay).map((row) => row.ids), [[], [], ['B']])
   assert.deepEqual(replay.eventAt(notice.seq).data.source, source)
 }
-console.log('Native DSH job-notice replacement and replay: OK (offline, no API)')
+console.log('Native DSH intervening user-message replacement and replay: OK (offline, no API)')

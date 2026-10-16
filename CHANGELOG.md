@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] — 2026-10-16
+
+### Fixed
+
+- Allow a block to span user follow-ups across turns. Include intervening user
+  messages in the full replacement interval and require their added requirements,
+  corrections and constraints in the summary. System/developer boundaries remain
+  protected and errors identify their event types and sequence numbers.
+- Refuse stale summaries when a new message arrives after the model authored
+  them, so deferred replacement cannot discard an unread follow-up.
+- Clarify that old module generations require a full host restart and that
+  existing historical summaries retain their original text.
+
 ## [0.2.1] — 2026-10-16
 
 ### Changed
@@ -147,7 +160,8 @@ First release: blackboard blocks for PTC mode.
   dispatch, the whole transaction, and the failure path that still releases the
   compaction lock.
 
-[Unreleased]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.0...v0.1.1

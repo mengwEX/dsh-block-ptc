@@ -53,17 +53,17 @@ function makeSession(listeners = host.listeners, seed = []) {
   })
   return session
 }
-function work(session, ids, step, complete = true, legacy = false) {
+function work(session, ids, step, complete = true, legacy = false, turn = 1) {
   const callId = `c${step}`
-  session.append('step/start', { turn: 1, step })
-  session.append('assistant/message', { turn: 1, step, message: { role: 'assistant', content: [
+  session.append('step/start', { turn, step })
+  session.append('assistant/message', { turn, step, message: { role: 'assistant', content: [
     { type: 'text', text: `thinking and content before ${callId}` }, { type: 'tool-call', id: callId },
   ] } })
-  session.append('tool/call', { turn: 1, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ...(legacy ? { id: ids[0] } : { ids }), description: ids.join(','), code: 'return 1' }) })
-  if (complete) result(session, step)
+  session.append('tool/call', { turn, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ...(legacy ? { id: ids[0] } : { ids }), description: ids.join(','), code: 'return 1' }) })
+  if (complete) result(session, step, turn)
 }
-function result(session, step) {
-  session.append('tool/result', { turn: 1, step, message: { role: 'tool', toolCallId: `c${step}`, source: { kind: 'tool', callId: `c${step}` }, content: [{ type: 'text', text: 'result' }] } })
+function result(session, step, turn = 1) {
+  session.append('tool/result', { turn, step, message: { role: 'tool', toolCallId: `c${step}`, source: { kind: 'tool', callId: `c${step}` }, content: [{ type: 'text', text: 'result' }] } })
 }
 function sequence(text, listeners = host.listeners) {
   const session = makeSession(listeners)
@@ -166,16 +166,19 @@ for (const source of [
   const replay = makeSession([], session.snapshotEvents())
   assert.equal(layout(replay), 'S[B]')
 }
-// Human instructions, unknown plugin messages and non-notice job messages remain protected.
-for (const source of [undefined, { kind: 'human' }, { kind: 'tool-jobs' }, { kind: 'plugin', plugin: 'other', form: 'notice' }]) {
+// User messages within the interval participate regardless of their source or turn.
+for (const source of [undefined, { kind: 'user' }, { kind: 'human' }, { kind: 'tool-jobs' }, { kind: 'plugin', plugin: 'other', form: 'notice' }]) {
   const session = sequence('A')
-  session.append('user/message', { role: 'user', source, content: [{ type: 'text', text: 'keep this instruction' }] })
+  const added = session.append('user/message', { role: 'user', source, content: [{ type: 'text', text: 'Use the revised requirement' }] })
   work(session, ['A'], 2)
-  const before = session.snapshotEvents().length
-  await assert.rejects(summarize(session, ['A']), /protected/)
-  assert.equal(session.snapshotEvents().length, before)
+  const value = await summarize(session, ['A'])
+  assert.equal(value.replaced, 5)
+  assert.equal(layout(session), 'S[]')
+  assert(!session.surface.nodes.includes(added.seq))
+  assert.equal(core.surfaceView(session).filter((row) => row.event.type === 'user/message' && !summaryMetadata(row.event)).length, 1, 'the original task before the interval stays')
+  assert.equal(layout(makeSession([], session.snapshotEvents())), 'S[]')
 }
-// A protected message refuses the entire operation; never replace only a prefix.
+// A not-yet-dispatched call contributes to the whole assistant message.
 {
   const session = sequence('A')
   session.append('assistant/message', { turn: 1, step: 2, message: { content: [
@@ -187,9 +190,9 @@ for (const source of [undefined, { kind: 'human' }, { kind: 'tool-jobs' }, { kin
 }
 
 // A protected message refuses the entire operation; never replace only a prefix.
-{
+for (const type of ['system/message', 'developer/message']) {
   const session = sequence('A')
-  session.append('user/message', { role: 'user', content: [{ type: 'text', text: 'keep this instruction' }] })
+  session.append(type, { message: { role: type.split('/')[0], content: [{ type: 'text', text: 'keep this instruction' }] } })
   work(session, ['A'], 2)
   const before = session.snapshotEvents().length
   await assert.rejects(summarize(session, ['A']), /protected/)
@@ -211,11 +214,11 @@ for (const source of [undefined, { kind: 'human' }, { kind: 'tool-jobs' }, { kin
   await summarize(session, ['A'])
   assert.equal(layout(session), 'S[B]')
 }
-function invocation(session, step, ids) {
-  return session.append('tool/ptc-dispatch-start', { subCallId: `c${step}:ptc:1`, name: 'block_summary', arguments: { ids, summary: 'handover' } })
+function invocation(session, step, ids, summary = 'handover') {
+  return session.append('tool/ptc-dispatch-start', { parentCallId: `c${step}`, subCallId: `c${step}:ptc:1`, name: 'block_summary', arguments: { ids, summary } })
 }
-function outcome(session, step, ids, value, isError = false) {
-  session.append('tool/ptc-dispatch', { subCallId: `c${step}:ptc:1`, name: 'block_summary', arguments: { ids, summary: 'handover' }, isError, content: host.defs.get('block_summary').output.render({}, value) })
+function outcome(session, step, ids, value, isError = false, summary = 'handover') {
+  session.append('tool/ptc-dispatch', { subCallId: `c${step}:ptc:1`, name: 'block_summary', arguments: { ids, summary }, isError, content: host.defs.get('block_summary').output.render({}, value) })
 }
 // A summary of its own running program waits; it includes that program when it settles.
 {
@@ -232,6 +235,37 @@ function outcome(session, step, ids, value, isError = false) {
   assert.equal(layout(session), 'S[B]')
   assert.equal(core.pendingSummaries(session).length, 0)
   assert.equal(core.surfaceView(session).filter((row) => row.ids.includes('A')).length, 0)
+}
+// A block may continue across a user follow-up and close in a later turn.
+{
+  const session = sequence('A')
+  session.append('turn/end', { turn: 1 })
+  const added = session.append('user/message', { role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: 'Keep the existing API compatible' }] })
+  session.append('turn/start', { turn: 2 })
+  work(session, ['A'], 2, false, false, 2)
+  const summary = 'Completed the change while keeping the existing API compatible. Next: report the result.'
+  invocation(session, 2, ['A'], summary)
+  const value = await host.defs.get('block_summary').execute({ ids: ['A'], summary }, { agent: { session }, callId: 'c2:ptc:1' })
+  outcome(session, 2, ['A'], value, false, summary)
+  result(session, 2, 2)
+  await drain()
+  assert.equal(layout(session), 'S[]')
+  assert(!session.surface.nodes.includes(added.seq))
+  assert(session.eventAt(session.surface.nodes.at(-1)).data.content[0].text.includes(summary))
+}
+// A user message arriving after the summary was authored must not disappear.
+{
+  const session = sequence('A')
+  work(session, ['A'], 2, false)
+  invocation(session, 2, ['A'])
+  const value = await host.defs.get('block_summary').execute({ ids: ['A'], summary: 'old progress' }, { agent: { session }, callId: 'c2:ptc:1' })
+  outcome(session, 2, ['A'], value)
+  const added = session.append('user/message', { role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: 'New requirement not in the old summary' }] })
+  result(session, 2)
+  await drain()
+  assert.equal(layout(session), 'A A')
+  assert(session.surface.nodes.includes(added.seq))
+  assert.throws(() => core.flushPending(host.ctx, session), /new message arrived/)
 }
 // Starts and failed dispatches never close a block. Queued success survives a restart/fork.
 {
