@@ -23,18 +23,14 @@ not a host screenshot or a performance benchmark.
 - [Submission instructions](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md)
 - [dsh-market's catalog source](https://github.com/dsh-market/dsh-market#submit-your-plugin)
 
-The prepared entry is [mengwEX__dsh-block-ptc.yml](mengwEX__dsh-block-ptc.yml).
-Submit that single file as `data/plugins/mengwEX__dsh-block-ptc.yml`; do not edit
-the catalog's generated READMEs or add an `npm` key. The package/repository
-mapping is collected by the catalog from npm metadata.
+Submitted on 2026-10-16: [catalog PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555).
+The submission adds only `data/plugins/mengwEX__dsh-block-ptc.yml`, from
+[mengwEX__dsh-block-ptc.yml](mengwEX__dsh-block-ptc.yml). Generated READMEs are unchanged.
+The npm mapping is collected from registry metadata; no `npm` key is added.
 
-**Earliest eligible time: 2026-10-16 11:15:18 Asia/Shanghai.** The catalog
-requires repositories to be at least one day old; this repository was created
-on 2026-10-15 at 11:15:18 Asia/Shanghai. Recheck the current rules and search for
-an existing entry/PR before submitting. Meeting the checks does not guarantee
-maintainer approval or immediate marketplace propagation.
+已于 2026-10-16 提交目录收录 [PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555)，
+仅新增一个 YAML 条目。仓库已满足创建满 24 小时的要求。提交不等于收录；
+是否合并及市场同步时间取决于维护者和目录工作流。
 
-收录条目已准备好。目录要求仓库创建满 24 小时，所以最早在上述时间后提交。
-提交时重新检查规则及是否已有条目或 PR，只添加一个 YAML 文件；不修改自动生成
-的 README。npm 映射会自动采集，无需在条目中添加字段。合并和市场同步取决于
-维护者及其工作流，不应将“已提交”说成“已收录”。
+Release: [v0.2.0](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.2.0).
+Package: [dsh-block-ptc on npm](https://www.npmjs.com/package/dsh-block-ptc).
