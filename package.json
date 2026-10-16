@@ -1,6 +1,6 @@
 {
   "name": "dsh-block-ptc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Blackboard blocks for DeepSeek Harness PTC mode: block_run_code assigns block ids to program messages, and block_summary replaces their complete interval with a model-written summary that inherits the remaining ids.",
   "type": "module",
   "license": "MIT",

@@ -194,6 +194,13 @@ tool is reached from inside a program, exactly like PTC mode.
 
 ## Reference
 
+Choose blocks for cohesive, loosely coupled units with a clear subgoal and
+completion point. Keep related investigation, implementation and verification
+together. Split a large task by separable subgoals, rather than assigning the
+whole task to one block or creating a block for every tool call. A small task
+may fit in one block. Close each unit when complete, then continue with the
+remaining work without waiting for the whole task to finish.
+
 ### Tool `block_run_code`
 
 | Parameter | Type | Required | Meaning |

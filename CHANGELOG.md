@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — 2026-10-16
+
+### Changed
+
+- Guide block selection toward cohesive, loosely coupled units with clear
+  subgoals and completion points. Close finished units during larger tasks,
+  without imposing call counts, parallelism rules or mandatory splits for small tasks.
+
 ## [0.2.0] — 2026-10-16
 
 ### Changed
@@ -139,7 +147,8 @@ First release: blackboard blocks for PTC mode.
   dispatch, the whole transaction, and the failure path that still releases the
   compaction lock.
 
-[Unreleased]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/mengwEX/dsh-block-ptc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.1.0
