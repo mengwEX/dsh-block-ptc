@@ -23,14 +23,13 @@ not a host screenshot or a performance benchmark.
 - [Submission instructions](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md)
 - [dsh-market's catalog source](https://github.com/dsh-market/dsh-market#submit-your-plugin)
 
-Submitted on 2026-10-16: [catalog PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555).
+Merged on 2026-10-17: [catalog PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555).
 The submission adds only `data/plugins/mengwEX__dsh-block-ptc.yml`, from
 [mengwEX__dsh-block-ptc.yml](mengwEX__dsh-block-ptc.yml). Generated READMEs are unchanged.
 The npm mapping is collected from registry metadata; no `npm` key is added.
 
-已于 2026-10-16 提交目录收录 [PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555)，
-仅新增一个 YAML 条目。仓库已满足创建满 24 小时的要求。提交不等于收录；
-是否合并及市场同步时间取决于维护者和目录工作流。
+目录收录 [PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555)
+已于 2026-10-17 合并。各市场的同步时间取决于其目录工作流。
 
-Release: [v0.2.2](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.2.2).
+Release: [v0.3.0](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.3.0).
 Package: [dsh-block-ptc on npm](https://www.npmjs.com/package/dsh-block-ptc).

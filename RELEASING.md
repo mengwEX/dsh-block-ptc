@@ -1,13 +1,13 @@
 # 发布指南
 
 仓库：<https://github.com/mengwEX/dsh-block-ptc>。包名与 bundle 中的插件解析名
-统一为 `dsh-block-ptc`。本次发布版本为 `0.2.2`。声明最低 DSH 版本为
-`0.2.0-rc.2`、最低 Cordis 版本为 `4.0.4`，均不设版本上限。
+统一为 `dsh-block-ptc`。本次发布版本为 `0.3.0`。声明最低 DSH 版本为
+`0.2.1-rc.2`、最低 Cordis 版本为 `4.0.5`，均不设版本上限。
 
 包已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为
-`mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。`0.1.1` 增加了浏览器
-半边（工具行渲染与 PTC 的 `run_code` 一致）和让它可被加载的宿主层锚点行；
-两处都必须在真实宿主里验收，见文末第 4 节。
+`mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。`0.3.0` 起区块归属写在
+内置 `run_code` 的描述头里，不再注册单独的传输工具；DSH `0.2.1` 的 PTC 收窄
+规则只允许直接调用 `run_code`。preset 必须在真实宿主里验收，见文末第 4 节。
 
 GitHub Release 与 npm 是两条独立的发布流程。创建 GitHub Release 不会上传 npm，
 仓库 CI 也不持有 npm 凭据或自动执行 `npm publish`。
@@ -60,8 +60,8 @@ npm publish --access public
 npm view dsh-block-ptc version
 ```
 
-未登录时使用 `npm login`，不要将 token 写进仓库。`prepack` 会自动执行语法检查
-和逻辑测试。npm 发布成功后再更新 README，说明可直接按包名安装。
+未登录时使用 `npm login`，不要将 token 写进仓库。发布前手动执行 `npm run check`
+及包内容检查；当前包不声明 `prepack`。npm 发布成功后核对注册表版本和下载内容。
 
 ## 4. 安装验收与回滚
 
@@ -82,9 +82,11 @@ plugin_manager install_bundle /absolute/path/to/dsh-block-ptc
 
 验收应确认：
 
-1. preset 可以启动，`block_run_code` 委派到内置 `run_code`。
-2. `tools.block_summary` 从程序内部调用，摘要出现在被替换内容的位置。
-3. 系统提示和用户消息保留，原始事件仍在会话日志中。
+1. preset 可以启动，roster 里没有 `broken` 诊断；模型直接调用 `run_code`
+   时带 `[block: <ids>] <goal>` 描述头。
+2. 缺少描述头的 `run_code` 被 guard 拒绝，且错误信息给出正确格式。
+3. `tools.block_summary` 从程序内部调用，摘要出现在被替换内容的位置。
+4. 系统提示及区间外消息保留；区间内用户追加消息参与总结，原始事件仍在会话日志中。
 
 回滚可停用或卸载 bundle 后重启：
 
@@ -93,5 +95,5 @@ plugin_manager set_bundle dsh-block-ptc enabled=false
 plugin_manager remove_bundle dsh-block-ptc
 ```
 
-本地开发改动需要重启宿主才能换用新模块。升级 DSH 时重新验证 API、预设和
-浏览器渲染；只放宽版本范围或通过接口存在检查，均不能作为兼容验收结论。
+本地开发改动需要重启宿主才能换用新模块。升级 DSH 时重新验证 API、预设组合和
+事件语义；只放宽版本范围或通过接口存在检查，均不能作为兼容验收结论。

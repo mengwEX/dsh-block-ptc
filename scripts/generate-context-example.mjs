@@ -69,8 +69,10 @@ function run(compact) {
       afterSummary: compact && step > 1 && (step - 1) % config.requestsPerBlock === 0 })
     pastInputs.push(input)
     session.append('step/start', { turn: 1, step })
-    surface('assistant/message', { turn: 1, step, message: { content: [{ type: 'tool-call' }] } }, config.assistantTokens)
-    session.append('tool/call', { turn: 1, step, name: 'block_run_code', arguments: JSON.stringify({ ids: [`task-${block}`], description: `Illustrative task ${block}` }) })
+    const callId = `call-${step}`
+    const argumentsText = JSON.stringify({ description: `[block: task-${block}] Illustrative task ${block}`, code: 'return 1' })
+    surface('assistant/message', { turn: 1, step, message: { content: [{ type: 'tool-call', id: callId, name: 'run_code', arguments: argumentsText }] } }, config.assistantTokens)
+    session.append('tool/call', { turn: 1, step, callId, name: 'run_code', arguments: argumentsText })
     surface('tool/result', { turn: 1, step, message: {} }, config.toolResultTokens)
     if (compact && step % config.requestsPerBlock === 0) {
       const closing = session.append('tool/ptc-dispatch-start', { subCallId: `call-${step}:ptc:1`, name: 'block_summary', arguments: { ids: [`task-${block}`], summary: 'Synthetic summary' } })

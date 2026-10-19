@@ -4,12 +4,11 @@ import { apply, __internals as core } from '../lib/plugin.js'
 import { summaryMetadata } from '../lib/blocks.js'
 
 function harness() {
-  const defs = new Map(), guards = [], sections = [], dispatched = [], listeners = []
+  const defs = new Map(), guards = [], sections = [], listeners = []
   const ctx = {
     tools: {
       register: (def) => defs.set(def.name, def),
       guard: (guard) => guards.push(guard),
-      execute: async (input) => { dispatched.push(input); return { isError: false, value: { logs: ['hello'], result: 1 } } },
     },
     systemPrompt: { section: (section) => sections.push(section) },
     get: () => ({ estimateMessage: () => 10 }),
@@ -17,7 +16,7 @@ function harness() {
     logger: { warn: () => {} },
   }
   apply(ctx)
-  return { ctx, defs, guards, sections, dispatched, listeners }
+  return { ctx, defs, guards, sections, listeners }
 }
 const host = harness()
 const drain = async () => { await new Promise((resolve) => queueMicrotask(resolve)) }
@@ -53,13 +52,14 @@ function makeSession(listeners = host.listeners, seed = []) {
   })
   return session
 }
-function work(session, ids, step, complete = true, legacy = false, turn = 1) {
+function work(session, ids, step, complete = true, turn = 1) {
   const callId = `c${step}`
+  const argumentsText = JSON.stringify({ description: `[block: ${ids.join(', ')}] goal for ${callId}`, code: 'return 1' })
   session.append('step/start', { turn, step })
   session.append('assistant/message', { turn, step, message: { role: 'assistant', content: [
-    { type: 'text', text: `thinking and content before ${callId}` }, { type: 'tool-call', id: callId },
+    { type: 'text', text: `thinking and content before ${callId}` }, { type: 'tool-call', id: callId, name: 'run_code', arguments: argumentsText },
   ] } })
-  session.append('tool/call', { turn, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ...(legacy ? { id: ids[0] } : { ids }), description: ids.join(','), code: 'return 1' }) })
+  session.append('tool/call', { turn, step, callId, name: 'run_code', arguments: argumentsText })
   if (complete) result(session, step, turn)
 }
 function result(session, step, turn = 1) {
@@ -125,12 +125,12 @@ async function summarize(session, ids, legacy = false) {
   await summarize(session, ['A', 'B'])
   assert.equal(layout(session), 'S[C]')
 }
-// Shared messages transfer all remaining memberships; old id calls remain valid.
+// Shared messages transfer all remaining memberships; the summary tool keeps its legacy id alias.
 {
   const session = sequence('')
   work(session, ['A', 'B'], 1)
   work(session, ['C'], 2)
-  work(session, ['A'], 3, true, true)
+  work(session, ['A'], 3)
   await summarize(session, ['A'], true)
   assert.equal(layout(session), 'S[B,C]')
   const meta = summaryMetadata(session.eventAt(session.surface.nodes.at(-1)))
@@ -140,8 +140,15 @@ async function summarize(session, ids, legacy = false) {
 {
   const session = sequence('')
   const data = { turn: 1, step: 1 }
-  session.append('assistant/message', { ...data, message: { content: [{ type: 'text', text: 'reasoning' }, { type: 'tool-call', id: 'a' }, { type: 'tool-call', id: 'b' }] } })
-  for (const id of ['A', 'B']) session.append('tool/call', { ...data, callId: id.toLowerCase(), name: 'block_run_code', arguments: JSON.stringify({ ids: [id] }) })
+  const aArgs = JSON.stringify({ description: '[block: A] first' })
+  const bArgs = JSON.stringify({ description: '[block: B] second' })
+  session.append('assistant/message', { ...data, message: { content: [
+    { type: 'text', text: 'reasoning' },
+    { type: 'tool-call', id: 'a', name: 'run_code', arguments: aArgs },
+    { type: 'tool-call', id: 'b', name: 'run_code', arguments: bArgs },
+  ] } })
+  session.append('tool/call', { ...data, callId: 'a', name: 'run_code', arguments: aArgs })
+  session.append('tool/call', { ...data, callId: 'b', name: 'run_code', arguments: bArgs })
   for (const id of ['a', 'b']) session.append('tool/result', { ...data, message: { source: { callId: id }, content: [] } })
   assert.deepEqual(core.surfaceView(session).filter((row) => row.ids.length).map((row) => row.ids), [['A', 'B'], ['A', 'B'], ['A', 'B']])
   const value = await summarize(session, ['A'])
@@ -182,8 +189,8 @@ for (const source of [undefined, { kind: 'user' }, { kind: 'human' }, { kind: 't
 {
   const session = sequence('A')
   session.append('assistant/message', { turn: 1, step: 2, message: { content: [
-    { type: 'tool-call', id: 'b', name: 'block_run_code', arguments: '{"ids":["B"]}' },
-    { type: 'tool-call', id: 'a', name: 'block_run_code', arguments: '{"ids":["A"]}' },
+    { type: 'tool-call', id: 'b', name: 'run_code', arguments: '{"description":"[block: B] second"}' },
+    { type: 'tool-call', id: 'a', name: 'run_code', arguments: '{"description":"[block: A] first"}' },
   ] } })
   assert.equal(core.planReplacement(session, ['A']).kind, 'pending', 'a not-yet-dispatched call still contributes to its whole message')
   assert.deepEqual(core.surfaceView(session).at(-1).ids, ['B', 'A'])
@@ -242,7 +249,7 @@ function outcome(session, step, ids, value, isError = false, summary = 'handover
   session.append('turn/end', { turn: 1 })
   const added = session.append('user/message', { role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: 'Keep the existing API compatible' }] })
   session.append('turn/start', { turn: 2 })
-  work(session, ['A'], 2, false, false, 2)
+  work(session, ['A'], 2, false, 2)
   const summary = 'Completed the change while keeping the existing API compatible. Next: report the result.'
   invocation(session, 2, ['A'], summary)
   const value = await host.defs.get('block_summary').execute({ ids: ['A'], summary }, { agent: { session }, callId: 'c2:ptc:1' })
@@ -298,26 +305,44 @@ function outcome(session, step, ids, value, isError = false, summary = 'handover
   assert.equal(layout(session), 'S[]')
   assert.equal(summaryMetadata(session.eventAt(session.surface.nodes.at(-1))).requestSeq, request.seq)
 }
-// Transport, schema, input validation, guard and discovery-anchor boundaries.
+// Historical 0.2.x logs keep their memberships and can still be summarized.
 {
-  assert.deepEqual([...host.defs.keys()], ['block_run_code', 'block_summary'])
+  const session = sequence('')
+  const argumentsText = JSON.stringify({ ids: ['A'], description: '[block: unrelated] legacy goal', code: 'return 1' })
+  session.append('assistant/message', { turn: 1, step: 1, message: { content: [{ type: 'tool-call', id: 'c1', name: 'block_run_code', arguments: argumentsText }] } })
+  session.append('tool/call', { turn: 1, step: 1, callId: 'c1', name: 'block_run_code', arguments: argumentsText })
+  session.append('tool/result', { turn: 1, step: 1, message: { source: { callId: 'c1' }, content: [] } })
+  assert.deepEqual(core.surfaceView(session).filter((row) => row.ids.length).map((row) => row.ids), [['A'], ['A']])
+  await summarize(session, ['A'])
+  assert.equal(layout(session), 'S[]')
+}
+
+// Header parsing, the summary tool, guard and host-API boundaries.
+{
+  assert.deepEqual([...host.defs.keys()], ['block_summary'])
   assert.equal(host.sections.length, 1)
   assert(!/first eligible|injection|at the start|one block open/.test(host.sections[0].text))
-  for (const name of ['block_run_code', 'block_summary']) {
-    for (const args of [{ ids: [] }, { ids: [''] }, { ids: ['A', 'A'] }, { ids: ['A'], id: 'A' }, {}]) {
-      await assert.rejects(host.defs.get(name).execute({ ...args, description: 'goal', code: 'return 1', summary: 's' }, { agent: { session: sequence('A') } }), /ids|legacy/)
-    }
+  assert.match(host.sections[0].text, /\[block: <ids>\]/)
+  assert.match(host.sections[0].text, /block_summary/)
+
+  assert.deepEqual(core.parseBlockHeader('[block: A, B] rework auth'), { ids: ['A', 'B'], goal: 'rework auth' })
+  assert.deepEqual(core.parseBlockHeader('  [block: A]   goal  '), { ids: ['A'], goal: 'goal' })
+  assert.deepEqual(core.parseBlockHeader('[block: session refresh] goal'), { ids: ['session refresh'], goal: 'goal' })
+  for (const bad of ['goal', '[block: A]', '[block:] goal', '[block: A, A] goal', '[block: A] ', 'run [block: A] goal', '[block: A,, B] goal', '[block: , A] goal', '[block: A, ] goal', '[block: [A] goal', '[block: A]\ngoal', '[block: A] goal\nextra']) {
+    assert.equal(core.parseBlockHeader(bad), undefined, bad)
   }
-  const value = await host.defs.get('block_run_code').execute({ ids: ['A', 'B'], description: 'goal', code: 'return 1' }, { callId: 'outer', rootCallId: 'outer', token: 'token' })
-  assert.deepEqual(value, { logs: ['hello'], result: 1 })
-  assert.equal(host.dispatched.at(-1).callId, 'outer')
-  assert.equal(host.dispatched.at(-1).parent, 'token')
-  assert.equal(host.dispatched.at(-1).arguments.description, '[block:A,B] goal')
+
+  for (const args of [{ ids: [] }, { ids: [''] }, { ids: ['A', 'A'] }, { ids: ['A'], id: 'A' }, {}]) {
+    await assert.rejects(host.defs.get('block_summary').execute({ ...args, summary: 's' }, { agent: { session: sequence('A') } }), /ids|legacy/)
+  }
+
   const guard = host.guards[0]
-  assert.equal(guard({ name: 'block_run_code' }), undefined)
+  assert.equal(guard({ name: 'run_code', arguments: { description: '[block: A] goal' } }), undefined)
+  assert.equal(guard({ name: 'run_code', parent: 'token', arguments: { description: 'goal' } }), undefined)
+  assert.match(guard({ name: 'run_code', arguments: { description: 'goal' } }), /\[block: <ids>\]/)
   assert.equal(guard({ name: 'read', parent: 'token' }), undefined)
-  assert.match(guard({ name: 'read' }), /only `block_run_code`/)
-  apply({}, { anchor: true })
+  assert.match(guard({ name: 'read' }), /only `run_code`/)
+
   assert.throws(() => apply({ ...host.ctx, tools: {} }), /incompatible DSH host API/)
   await assert.rejects(summarize({ surface: { nodes: [] } }, ['A']), /incompatible DSH session API/)
 }

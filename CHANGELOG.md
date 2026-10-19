@@ -4,6 +4,38 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-10-19
+
+### Changed
+
+- **Breaking:** blocks are declared in the built-in `run_code` description as
+  `[block: <ids>] <goal>`. The separate `block_run_code` tool was removed:
+  DSH 0.2.1 removed `tool-presentation.mode: both`, and under `ptc` every
+  model-direct call other than `run_code` is rejected before policy, so a
+  second transport tool can no longer be reached.
+- The `block-ptc` preset now uses the shipped preset's `mode: ptc` and matches
+  its current rows (time context, schedule, subagent background modes, disabled
+  provider rows, plugin market), plus the `dsh-block-ptc` row.
+- The browser half and the host-level discovery anchor were removed. The
+  built-in `run_code` row already renders the description, including the block
+  header, as its summary.
+- The guard now requires a well-formed block header on every model-direct
+  `run_code` call and keeps the nested-call exemption and the non-`run_code`
+  denial.
+
+### Fixed
+
+- Reject empty ids and malformed description headers; preserve explicit ids
+  when replaying legacy `block_run_code` records.
+- The preset no longer fails activation on DSH 0.2.1 with
+  `invalid config: $.mode expected "native" | "ptc" but got "both"`.
+
+### Compatibility
+
+- Peer minimums are DSH `0.2.1-rc.2` and Cordis `4.0.5`, with no upper bounds.
+- Verified against DSH `0.2.1-rc.2`: preset activation without a `broken`
+  diagnostic, real `Session` append and replay, and tool schema checks.
+
 ## [0.2.2] — 2026-10-16
 
 ### Fixed

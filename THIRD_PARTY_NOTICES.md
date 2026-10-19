@@ -4,11 +4,8 @@
 
 `cordis.patch.yml` adapts the PTC preset from DeepSeek Harness
 (`@deepseek-ai/dsh-web-app/presets/ptc.patch.yml`, compatibility baseline
-`0.2.0-rc.2`). The upstream project is available at
+`0.2.1-rc.2`). The upstream project is available at
 <https://github.com/deepseek-ai/deepseek-harness>.
-
-`client/client.js` also adapts the host client's tool-row markup, styles and
-icons (`DisclosureRow` and `ToolRow`) under the plugin's `dbp-` prefix.
 
 The adapted upstream code is distributed under the following MIT license:
 

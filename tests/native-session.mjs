@@ -24,7 +24,7 @@ if (process.argv[3]) {
 function sessionFor(ids, noticeSource) {
   const session = Session.create('block-ptc-offline')
   session.append('system/message', { turn: 1, step: 1, message: { id: 'sys', role: 'system', source: { kind: 'system-prompt' }, content: [{ type: 'text', text: 'system' }] } }, { surfaceOp: 'append' })
-  session.append('user/message', { id: 'user', role: 'user', source: { kind: 'human' }, content: [{ type: 'text', text: 'task' }] }, { surfaceOp: 'append' })
+  session.append('user/message', { id: 'user', role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: 'task' }] }, { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
   let turn = 1
   for (const [i, id] of [...ids].entries()) {
@@ -35,9 +35,10 @@ function sessionFor(ids, noticeSource) {
       session.append('turn/start', { turn })
     }
     const step = i + 1, callId = `c${step}`
+    const argumentsText = JSON.stringify({ description: `[block: ${id}] goal ${callId}`, code: 'return 1' })
     session.append('step/start', { turn, step })
-    session.append('assistant/message', { turn, step, stream: [], message: { id: `a${step}`, role: 'assistant', source: { kind: 'model', provider: 'test', model: 'offline' }, content: [{ type: 'text', text: 'thinking before call' }, { type: 'tool-call', id: callId, name: 'block_run_code', arguments: '{}' }] } }, { surfaceOp: 'append' })
-    session.append('tool/call', { turn, step, callId, name: 'block_run_code', arguments: JSON.stringify({ ids: [id] }) })
+    session.append('assistant/message', { turn, step, stream: [], message: { id: `a${step}`, role: 'assistant', source: { kind: 'model', provider: 'test', model: 'offline' }, content: [{ type: 'text', text: 'thinking before call' }, { type: 'tool-call', id: callId, name: 'run_code', arguments: argumentsText }] } }, { surfaceOp: 'append' })
+    session.append('tool/call', { turn, step, callId, name: 'run_code', arguments: argumentsText })
     session.append('tool/result', { turn, step, message: { id: `r${step}`, role: 'tool', toolCallId: callId, source: { kind: 'tool', callId }, content: [{ type: 'text', text: 'output' }] } }, { surfaceOp: 'append' })
   }
   return session
