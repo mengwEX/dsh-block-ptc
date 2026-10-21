@@ -1,13 +1,14 @@
 # 发布指南
 
 仓库：<https://github.com/mengwEX/dsh-block-ptc>。包名与 bundle 中的插件解析名
-统一为 `dsh-block-ptc`。本次发布版本为 `0.3.0`。声明最低 DSH 版本为
+统一为 `dsh-block-ptc`。本次发布版本为 `0.4.0`。声明最低 DSH 版本为
 `0.2.1-rc.2`、最低 Cordis 版本为 `4.0.5`，均不设版本上限。
 
 包已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为
 `mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。`0.3.0` 起区块归属写在
 内置 `run_code` 的描述头里，不再注册单独的传输工具；DSH `0.2.1` 的 PTC 收窄
-规则只允许直接调用 `run_code`。preset 必须在真实宿主里验收，见文末第 4 节。
+规则只允许直接调用 `run_code`。`0.4.0` 起使用 `block_compact({ ids, content })`，
+不提供旧接口兼容。preset 必须在真实宿主里验收，见文末第 4 节。
 
 GitHub Release 与 npm 是两条独立的发布流程。创建 GitHub Release 不会上传 npm，
 仓库 CI 也不持有 npm 凭据或自动执行 `npm publish`。
@@ -83,9 +84,11 @@ plugin_manager install_bundle /absolute/path/to/dsh-block-ptc
 验收应确认：
 
 1. preset 可以启动，roster 里没有 `broken` 诊断；模型直接调用 `run_code`
-   时带 `[block: <ids>] <goal>` 描述头。
+   时带 `[block: <ids>] <goal>` 描述头。首次请求的工具描述、参数 schema 和 SDK
+   示例都应说明相同格式。
 2. 缺少描述头的 `run_code` 被 guard 拒绝，且错误信息给出正确格式。
-3. `tools.block_summary` 从程序内部调用，摘要出现在被替换内容的位置。
+3. `tools.block_compact({ ids, content })` 从程序内部调用，保留内容出现在被替换
+   内容的位置。仍用于执行、回复或讨论的材料继续保留，不因步骤完成就整理。
 4. 系统提示及区间外消息保留；区间内用户追加消息参与总结，原始事件仍在会话日志中。
 
 回滚可停用或卸载 bundle 后重启：

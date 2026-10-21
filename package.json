@@ -1,7 +1,7 @@
 {
   "name": "dsh-block-ptc",
-  "version": "0.3.0",
-  "description": "Blackboard blocks for DeepSeek Harness PTC mode: a [block: id] header on run_code tags program messages, and block_summary replaces their complete interval with a model-written summary that inherits the remaining ids.",
+  "version": "0.4.0",
+  "description": "Blackboard blocks for DeepSeek Harness PTC mode: tag run_code with block ids and use block_compact to organize inactive context while retaining information needed for subsequent work.",
   "type": "module",
   "license": "MIT",
   "author": "WangMeng <mengw.ex@gmail.com> (https://github.com/mengwEX)",
@@ -57,6 +57,6 @@
   },
   "scripts": {
     "test": "node tests/logic.test.mjs",
-    "check": "node --check lib/plugin.js && node --check lib/blocks.js && node --check tests/logic.test.mjs && node --check tests/native-session.mjs && npm test"
+    "check": "node --check lib/plugin.js && node --check lib/blocks.js && node --check lib/prompts.js && node --check tests/logic.test.mjs && node --check tests/native-session.mjs && node --check tests/native-prompt.mjs && npm test"
   }
 }

@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-10-21
+
+### Changed
+
+- **Breaking:** replace `block_summary({ ids, summary })` with
+  `block_compact({ ids, content })`. Remove the old tool, single `id` alias
+  and old transport replay branches; no compatibility aliases are provided.
+- Compact when earlier content is no longer needed, or results have already
+  been reported and work is moving on. Keep material needed for upcoming
+  execution, replies and discussion; finishing a step does not trigger compaction.
+- Require full retention of information needed for subsequent work; summarize
+  or omit material that is no longer needed. Remove the reporting-only guidance.
+- Align the initial native `run_code` description/parameter schema and SDK
+  examples with the block header. Keep transport execution and native runtime
+  instructions unchanged; remove the task-specific block-header example.
+
 ## [0.3.0] — 2026-10-19
 
 ### Changed

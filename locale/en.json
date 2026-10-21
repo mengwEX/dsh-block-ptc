@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "dsh-block-ptc",
-    "description": "Blackboard blocks for PTC mode: assign block ids to program messages and summarize completed work while carrying the remaining ids forward."
+    "description": "Blackboard blocks for PTC mode: tag programs with block ids and compact context no longer needed for active work, retaining details needed later."
   }
 }

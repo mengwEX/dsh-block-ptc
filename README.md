@@ -8,18 +8,23 @@
 
 Blackboard blocks for **PTC mode** in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
-Version `0.3.0` layers the block protocol on the built-in `run_code` transport.
+Version `0.4.0` uses `block_compact({ ids, content })`. The old `block_summary`
+tool and `summary`/single `id` arguments are not supported. Restart DSH and
+start a new **Block PTC** session after updating.
+
+The block protocol uses the built-in `run_code` transport.
 DSH's PTC presentation allows only `run_code` to be called directly, so the
 model declares blocks in the tool description:
 
 ```
-run_code({ description: "[block: auth] Rework the auth tests", code })
+run_code({ description: "[block: <ids>] <goal>", code })
 ```
 
 A *block* is a blackboard region. Every program the model runs is tagged with
-block ids, and when the block's work is finished the model hands in a summary
-**it writes itself** — which then replaces that block's messages in the model's
-own context. The original messages stay in the append-only session log, so the
+block ids. When the content is no longer needed, or its results have already
+been reported and the model is moving to other work, it can submit retained
+content **it writes itself** to replace the block's messages. Information still
+needed for execution, replies or discussion remains available. The original messages stay in the append-only session log, so the
 human transcript keeps everything and replay stays deterministic.
 
 - DeepSeek Harness **0.2.1-rc.2 or newer**; no upper version bound
@@ -78,15 +83,15 @@ program-callable:
 
 ```
 run_code({ description: "[block: <ids>] <goal>", code })   the only tool it may call directly
-await tools.block_summary({ ids, summary })                  callable from inside a program
+await tools.block_compact({ ids, content })                  callable from inside a program
 ```
 
 1. The header in `run_code.description` names the blocks a program advances.
    Its ids apply to the complete assistant message, including preceding
    thinking/text, and its tool results. Calls in the same assistant message
    contribute the union of their ids.
-2. `tools.block_summary({ ids, summary })` replaces the complete interval from
-   the earliest to the latest occurrence of any target id with one summary.
+2. `tools.block_compact({ ids, content })` replaces the complete interval from
+   the earliest to the latest occurrence of any target id with the retained content.
 3. The summary inherits the union of the interval's ids minus the target ids.
    It can participate in a later summary. A summary with no remaining ids stays.
 4. If a tool pair in the interval is unfinished, the request is queued until
@@ -94,10 +99,10 @@ await tools.block_summary({ ids, summary })                  callable from insid
    entire interval; no prefix is silently replaced.
 
 ```text
-A A B A C B  -- summary([A]) --> S[B] C B
-S[B] C B    -- summary([B]) --> T[C]
-T[C]        -- summary([C]) --> U[]
-A A B A C B -- summary([A, B]) --> S[C]
+A A B A C B  -- compact([A]) --> S[B] C B
+S[B] C B    -- compact([B]) --> T[C]
+T[C]        -- compact([C]) --> U[]
+A A B A C B -- compact([A, B]) --> S[C]
 ```
 
 What the human sees afterwards: the transcript still shows every original
@@ -180,32 +185,37 @@ it without removing the package.
 
 ## Quick start
 
-Say what you want done, then let it close the block when it finishes:
+Work and discuss the results first. Compact earlier blocks when moving to
+other work, once their original content is no longer needed:
 
-> Read the parser module, explain how the tokenizer works, then close the block
-> and continue with the lexer.
+> Explain how the tokenizer works.
+>
+> After that discussion: move on to the lexer; organize the earlier block if
+> its original content is no longer needed.
 
 You should see:
 
 - the model calling `run_code` with a description such as
   `[block: tokenizer] Explain the tokenizer` for everything it runs;
-- a closing call to `block_summary` whose return value is
+- a closing call to `block_compact` whose return value is
   `{"replaced": 3, "tokensFreed": 346}` — how many messages were replaced and
   the estimated token count of the replaced messages (before counting the new summary);
 - a `<block-summary>…</block-summary>` node sitting where those messages were.
 
-If a program call is refused with *"every `run_code` description must start
-with `[block: <ids>] <goal>`"*, that is the preset's guard working. Retry the
+The initial request includes the header requirement in the system prompt,
+native tool description and parameter schema. The SDK uses the same header
+format.
+
+If a program call is refused with *"Every run_code call, including the first"*, that is the preset's guard working. Retry the
 program with the header; the refused call itself is not tagged.
 
 ## Reference
 
-Choose blocks for cohesive, loosely coupled units with a clear subgoal and
-completion point. Keep related investigation, implementation and verification
-together. Split a large task by separable subgoals, rather than assigning the
-whole task to one block or creating a block for every tool call. A small task
-may fit in one block. Close each unit when complete, then continue with the
-remaining work without waiting for the whole task to finish.
+Organize blocks around relatively independent units of work, reusing the id
+while continuing the same work. Compact a block when its content is no longer
+needed, or its results have already been reported to the user and you are
+moving on to other work. Keep content needed for upcoming execution, replies
+or discussion. Finishing a work step alone is not a reason to compact.
 
 ### Header in `run_code.description`
 
@@ -214,34 +224,19 @@ remaining work without waiting for the whole task to finish.
 | `[block: <ids>]` | header | yes | Comma-separated, non-empty, unique block ids, such as `[block: auth]` or `[block: auth, parser]`. Ids must not contain commas, brackets or line breaks. |
 | `<goal>` | string | yes | The goal of this program, on the same line after the header. It is displayed as the tool row's summary. |
 
-Example:
-
-```ts
-run_code({
-  description: '[block: auth] Rework the authentication tests',
-  code: `
-    const files = await tools.glob({ pattern: 'tests/auth/**' })
-    return files
-  `,
-})
-```
-
 `run_code` itself is DSH's tool; the plugin does not replace it. Its
 `code`/`timeoutMs` parameters, sandbox, parallel scheduling and result
-rendering are exactly the built-in PTC ones. The plugin only reads the header
-and tags the surrounding messages.
+rendering use the built-in PTC behavior. The plugin aligns the model-facing
+header guidance and reads the header to tag surrounding messages.
 
-### Callable `tools.block_summary`
+### Callable `tools.block_compact`
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `ids` | string[] | yes* | Block ids to summarize and close. |
-| `id` | string | no | Legacy alias for `ids: [id]`. Supply either form, not both. |
-| `summary` | string | yes | Written by the model. Summarize the complete first-to-last interval for these ids. Preserve intervening user requirements, corrections and constraints. State the goal, completed work and results, unfinished work, and next step; if only reporting to the user remains, say so. Retain necessary details as appropriate. |
+| `ids` | string[] | yes | Block ids to organize and close. |
+| `content` | string | yes | Written by the model. Organize the complete first-to-last interval for these ids. Preserve information still needed for subsequent work in full, with enough detail to continue directly. Briefly summarize information no longer needed; omit irrelevant or duplicate material. Preserve user requirements, corrections and constraints accurately. Record completed work, results, unfinished work and the next step. |
 
-*`ids` is required unless the legacy `id` is supplied.
-
-The replacement text identifies itself as your summary of earlier work and is
+The replacement text identifies information you retained from earlier work and is
 wrapped in `<block-summary>…</block-summary>`. It includes a `Block ids` line
 only when memberships remain. Empty ids stay in internal metadata. This format
 is separate from DSH automatic compaction; both can coexist.
@@ -266,7 +261,8 @@ The shipped `ptc` preset plus:
 - this plugin's row, which adds a **guard** that requires the
   `[block: <ids>] <goal>` header on every model-direct `run_code` call (and
   still rejects a direct call to any other tool if the collapse is absent),
-  the block rules section, and the program-callable `block_summary`.
+  the block rules section, model-facing native transport guidance, and the
+  program-callable `block_compact`.
 
 ## Design notes
 
@@ -327,22 +323,20 @@ sessions: header parsing, tool registration, the guard, the whole compaction
 transaction, the failure path that still releases the lock, and the host-API
 checks.
 
-The optional native check uses DSH's real `Session` class:
+The optional native checks use DSH's installed services:
 
 ```
 node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-tools/lib/index.js
+node tests/native-prompt.mjs /path/to/dsh-tools/lib/index.js
 ```
 
-Run against DSH `0.2.1-rc.2`, it verifies tool schema support, native append and
-replay of every compaction event, intervening user-message replacement, and the
-deferred-request paths. The preset was also activated in a `0.2.1-rc.2` host:
-the roster reported no `broken` diagnostic, the mounted composition included
-`dsh-block-ptc`, and a preset scope exposed exactly one wire schema
-(`run_code`) with `block_summary` visible to the program SDK but denied as a
-direct call. The same host's guard denied a headerless `run_code`, allowed a
-valid header, and allowed a nested call while denying a direct `bash`. This
-does not run a model or validate the live Web UI. A live model turn still needs
-a credentialed host; the plugin has no credential of its own.
+The Session check verifies tool schema support, native append/replay and
+intervening user-message replacement. The prompt check assembles the initial
+request through real SystemPrompt, Tools and Cordis services: the native
+`run_code` schema and SDK examples carry the block header, the program SDK
+exposes `block_compact({ ids, content })`, and native code/runtime instructions
+are preserved. Both checks are offline; they do not run a model or validate
+live UI rendering, block selection, compaction timing or information retention.
 
 ## Troubleshooting
 
@@ -355,7 +349,7 @@ a credentialed host; the plugin has no credential of its own.
 | Summary says *"no current content for ids"* | The id never appeared in a `run_code` header in the current surface. Check the header spelling; already summarized ids are closed. |
 | New summaries still use the old framing | The host is running an old module generation. Update the bundle and fully quit/reopen DSH. Existing historical summaries keep their original text. |
 | Edits to the plugin do not take effect | Modules are cached per URL and module watching is off by default: restart the app. |
-| A block never gets compressed | It was never closed with `block_summary`, so its content stays until automatic compaction folds it into a generic summary. |
+| A block never gets compressed | It was never closed with `block_compact`, so its content stays until automatic compaction folds it into a generic summary. |
 | Compaction stops working in a session | A `compaction/start` without a matching `compaction/end` is the durable lock. This plugin closes its own bracket on every failure; if you hit it from an older build, start a fresh session. |
 
 ## Known limits
@@ -365,11 +359,10 @@ a credentialed host; the plugin has no credential of its own.
   skipped and no prefix is treated as a completed summary.
 - The block header is model-authored. A call without it is refused before
   execution, so untagged work never enters a block.
-- Summaries are lossy: necessary information must be included in their text.
+- Omitted information is unavailable in later model requests. Preserve all
+  details still needed for subsequent work in `content`.
 - Checkpoints inherit remaining ids and may be summarized again. A checkpoint
   with empty ids is retained as the completed result.
-- Existing block summaries from the `0.2.x` tool are still replayable; new
-  calls use the header because the old transport tool no longer exists.
 - Blocks are per session. Sub-agents run their own context and their own blocks.
 - Peer dependencies declare minimum versions without an upper bound. Newer
   hosts are allowed, but compatible event semantics and preset configuration
@@ -379,8 +372,9 @@ a credentialed host; the plugin has no credential of its own.
 
 ```
 .
-├── lib/plugin.js        host-side guard, block_summary, transactions
+├── lib/plugin.js        host-side guard, block_compact, transactions
 ├── lib/blocks.js        header parsing, message memberships and interval planning
+├── lib/prompts.js       block usage and native tool/schema guidance
 ├── cordis.patch.yml     the bundle patch: one new preset, `block-ptc`
 ├── locale/{en,zh}.json  display metadata read by the Harness UI
 ├── tests/logic.test.mjs the logic and transaction tests

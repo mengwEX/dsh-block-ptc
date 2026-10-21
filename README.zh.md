@@ -8,15 +8,19 @@
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 **PTC 模式**加「黑板块」。
 
-`0.3.0` 把区块协议架在内置 `run_code` 传输层上。DSH 的 PTC 呈现只允许直接调用
+`0.4.0` 使用 `block_compact({ ids, content })`，不兼容旧的 `block_summary`
+工具及 `summary`/单个 `id` 参数。更新后重启 DSH，并新建 **Block PTC** 会话。
+
+区块协议使用内置 `run_code` 传输层。DSH 的 PTC 呈现只允许直接调用
 `run_code`，所以区块归属写在工具描述的开头：
 
 ```
-run_code({ description: "[block: auth] Rework the auth tests", code })
+run_code({ description: "[block: <ids>] <goal>", code })
 ```
 
-一个*区块*就是黑板上的一块区域。模型跑的每段程序都会带上区块 id；这块工作完成时，
-模型提交一段**自己写的**总结，替换它在自己上下文里的那些消息。原始消息仍保留在
+一个*区块*就是黑板上的一块区域。模型跑的每段程序都会带上区块 id。当区块内容不再
+需要，或相关结果已经汇报且准备转向其他工作时，可以提交**自己整理的保留内容**替换
+区块消息。仍需用于执行、回复或讨论的内容应继续保留。原始消息仍保留在
 只追加的会话日志里，人类看到的对话记录不变，重放也是确定性的。
 
 - DeepSeek Harness **0.2.1-rc.2 或更新**，不设版本上限
@@ -69,13 +73,13 @@ run_code({ description: "[block: auth] Rework the auth tests", code })
 
 ```
 run_code({ description: "[block: <ids>] <goal>", code })   唯一可直接调用的工具
-await tools.block_summary({ ids, summary })                 在程序内部调用
+await tools.block_compact({ ids, content })                 在程序内部调用
 ```
 
 1. `run_code.description` 开头的区块头声明这段程序推进哪些区块。id 归属覆盖整条
    assistant 消息（包含工具调用前的 thinking/content）及对应工具结果；同一消息内
    多个调用的 id 取并集。
-2. `tools.block_summary({ ids, summary })` 用一段总结替换从最早到最晚一次出现
+2. `tools.block_compact({ ids, content })` 用整理后的保留内容替换从最早到最晚一次出现
    目标 id 的完整区间。
 3. 总结继承「区间内 id 的并集减去本次收口的 id」。它可以再次参与后续总结；没有
    剩余 id 的总结节点也会保留。
@@ -83,10 +87,10 @@ await tools.block_summary({ ids, summary })                 在程序内部调�
    system/developer 消息会拒绝整个区间，不会只替换前缀。
 
 ```text
-A A B A C B  -- summary([A]) --> S[B] C B
-S[B] C B    -- summary([B]) --> T[C]
-T[C]        -- summary([C]) --> U[]
-A A B A C B -- summary([A, B]) --> S[C]
+A A B A C B  -- compact([A]) --> S[B] C B
+S[B] C B    -- compact([B]) --> T[C]
+T[C]        -- compact([C]) --> U[]
+A A B A C B -- compact([A, B]) --> S[C]
 ```
 
 人类看到的仍是完整对话（日志只追加）；模型下一次请求看到的是总结。Web UI 里
@@ -162,29 +166,33 @@ plugin_manager  remove_bundle  dsh-block-ptc
 
 ## 快速上手
 
-直接说要做什么，完成后让它收口：
+先完成工作并讨论结果；之后转向其他工作、原始内容不再需要时，再整理之前的区块：
 
-> 读一下 parser 模块，讲清 tokenizer 怎么工作，然后把这个区块收掉，继续看 lexer。
+> 讲清 tokenizer 怎么工作。
+>
+> 讨论完之后：接着看 lexer；之前的区块如果已不需要原始内容，就整理一下。
 
 你应该看到：
 
 - 模型每次跑程序都用带区块头的 `run_code`，例如
   `[block: tokenizer] Explain the tokenizer`；
-- 一次 `block_summary` 收口调用，返回值类似
+- 一次 `block_compact` 收口调用，返回值类似
   `{"replaced": 3, "tokensFreed": 346}`——替换了多少条消息，以及被替换消息的
   估算 token 数（不含新总结本身）；
 - 原位置出现一个 `<block-summary>…</block-summary>` 节点。
 
-如果程序调用被拒绝并提示 *"every `run_code` description must start with
-`[block: <ids>] <goal>`"*，那是 preset 的 guard 在工作：带上区块头重试即可；
+首次请求的系统提示、原生工具描述和参数 schema 都会说明区块头要求，SDK 使用说明
+也使用相同格式。
+
+如果程序调用被拒绝并提示 *"Every run_code call, including the first"*，
+那是 preset 的 guard 在工作：带上区块头重试即可；
 被拒绝的那次调用本身不会被归属到任何区块。
 
 ## 接口参考
 
-区块要选内聚、松耦合、有明确子目标和完成点的工作单元。相关的调查、修改与验证放在
-一起。大任务按可分离的子目标切块，不要把整个任务塞进一个区块，也不要每调一次工具
-就开一个新区块。小任务一个区块就够。每块完成后立即收口，再继续剩下的工作，不必等
-整个任务结束。
+按相对独立的工作内容组织区块，继续处理同一内容时复用原有 id。区块内容已不再
+需要，或相关结果已经向用户汇报且准备转向其他工作时，可以整理并收口。仍需用于
+接下来的执行、回复或讨论的内容应继续保留。不要仅因某个工作步骤完成就收口。
 
 ### `run_code.description` 里的区块头
 
@@ -193,32 +201,18 @@ plugin_manager  remove_bundle  dsh-block-ptc
 | `[block: <ids>]` | 头部 | 是 | 逗号分隔、非空、不重复的区块 id，例如 `[block: auth]` 或 `[block: auth, parser]`。id 不能包含逗号、方括号或换行。 |
 | `<goal>` | string | 是 | 头部之后同一行里的目标，显示为工具行的摘要。 |
 
-示例：
-
-```ts
-run_code({
-  description: '[block: auth] Rework the authentication tests',
-  code: `
-    const files = await tools.glob({ pattern: 'tests/auth/**' })
-    return files
-  `,
-})
-```
-
 `run_code` 本身是 DSH 的工具，插件不替换它。`code`/`timeoutMs` 参数、沙箱、
-并行调度和结果渲染都与内置 PTC 完全一致；插件只读区块头并给周围消息打归属。
+并行调度和结果渲染都与内置 PTC 完全一致。插件会对齐模型可见的区块头说明，
+读取区块头并给周围消息打归属。
 
-### 可调用 `tools.block_summary`
+### 可调用 `tools.block_compact`
 
 | 参数 | 类型 | 必填 | 含义 |
 |---|---|---|---|
-| `ids` | string[] | 是* | 要总结并收口的区块 id。 |
-| `id` | string | 否 | `ids: [id]` 的旧别名。二选一，不能同时给。 |
-| `summary` | string | 是 | 由模型撰写。总结这些 id 从第一次到最后一次出现的完整区间，保留区间内用户新增的要求、修正和约束。写清目标、已完成的工作与结果、未完成的工作和下一步；如果只剩向用户汇报，也要说明。按需保留代码、路径、命令、关键输出和决定。 |
+| `ids` | string[] | 是 | 要整理并收口的区块 id。 |
+| `content` | string | 是 | 由模型撰写，整理这些 id 从第一次到最后一次出现的完整内容。后续仍需使用的信息应完整保留，保证可以直接继续工作；不再需要的内容可以简要概括，无关或重复内容可省略。准确保留用户要求、修正和约束，写清已完成的工作、结果、未完成事项和下一步。 |
 
-*`ids` 必填，除非用旧的 `id` 别名。
-
-替换文本会说明这是模型对先前工作的总结，并包在
+替换文本会说明这是模型从先前工作中整理保留的信息，并包在
 `<block-summary>…</block-summary>` 里。只有还有剩余归属时才出现 `Block ids`
 一行；空 ids 留在内部元数据里。这个格式与 DSH 自动压缩分开，二者可以共存。
 
@@ -239,7 +233,7 @@ run_code({
   继续生效：只有 `run_code` 可以直接调用；
 - 本插件的行：一条 **guard**，要求每次模型直接调用的 `run_code` 都带
   `[block: <ids>] <goal>` 头（如果收窄规则缺席，也仍然拒绝直接调用其他工具）；
-  此外还有区块规则段和程序内可调用的 `block_summary`。
+  此外还有区块规则段、原生工具的模型可见说明，以及程序内可调用的 `block_compact`。
 
 ## 设计说明
 
@@ -289,19 +283,18 @@ node tests/logic.test.mjs
 逻辑测试用假的 context 和会话驱动真实的插件入口：区块头解析、工具注册、guard、
 完整的压缩事务、失败后仍释放锁的路径，以及宿主 API 检查。
 
-可选的实机检查使用 DSH 真实的 `Session` 类：
+可选的原生离线检查使用 DSH 已安装的服务：
 
 ```
 node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-tools/lib/index.js
+node tests/native-prompt.mjs /path/to/dsh-tools/lib/index.js
 ```
 
-在 DSH `0.2.1-rc.2` 上运行，它验证工具 schema 支持、所有压缩事件的真实 append 与
-重放、区间内用户消息替换，以及延迟请求路径。preset 也在 `0.2.1-rc.2` 宿主里
-激活过：roster 没有 `broken` 诊断，挂载组合包含 `dsh-block-ptc`，且 preset
-作用域的线上 schema 只有 `run_code`，`block_summary` 对程序 SDK 可见、作为直接
-调用则被拒绝。同一宿主的 guard 拒绝了没有区块头的 `run_code`，允许带合法区块头
-的调用，允许嵌套调用并拒绝直接调用 `bash`。这不会运行模型，也不会验证 Web UI 的
-实际渲染；一次带模型的实机对话仍需要已配置凭据的宿主。
+Session 检查验证工具 schema、真实事件 append/重放及区间内用户消息替换。提示词
+检查通过真实的 SystemPrompt、Tools 和 Cordis 服务组装首次请求：原生 `run_code`
+的 schema 与 SDK 示例包含区块头，程序 SDK 提供 `block_compact({ ids, content })`，
+宿主原有的程序与运行时说明保持不变。这两项均不调用模型，不验证实时 UI、区块选择、
+整理时机或信息保留质量。
 
 ## 排障
 
@@ -314,7 +307,7 @@ node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-too
 | 总结报 *"no current content for ids"* | 该 id 没在当前 surface 的 `run_code` 头里出现过。检查拼写；已收口的 id 不再可见。 |
 | 新总结还是旧格式 | 宿主仍在跑旧模块。更新 bundle，完全退出并重开 DSH。历史总结保留原文。 |
 | 改了插件不生效 | 模块按 URL 缓存，默认不开模块监听：重启应用。 |
-| 某个区块一直不被压缩 | 没有用 `block_summary` 收口，内容会留到自动压缩把它折进通用总结。 |
+| 某个区块一直不被压缩 | 没有用 `block_compact` 收口，内容会留到自动压缩把它折进通用总结。 |
 | 会话里压缩不工作了 | 没有配对 `compaction/end` 的 `compaction/start` 就是持久锁。本插件在每个失败路径都会关闭自己的括号；旧版本留下的锁请开新会话。 |
 
 ## 已知边界
@@ -323,10 +316,9 @@ node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-too
   就拒绝整个区间，不会跳过它，也不会把前缀当成已完成总结。
 - 区块头由模型撰写。没有区块头的调用会在执行前被拒绝，所以未归属的工作不会进入
   区块。
-- 总结是有损的：必要信息必须写进总结文本。
+- 未写入保留内容的信息在后续模型请求中不可见；后续工作仍需使用的细节应完整写入
+  `content`。
 - 检查点继承剩余 id，可以再次被总结；空 id 的检查点作为已完成结果保留。
-- `0.2.x` 工具产生的历史区块总结仍可重放；新调用使用区块头，因为旧的传输工具已经
-  不存在。
 - 区块按会话隔离。子 agent 有自己的上下文和区块。
 - peer 依赖只声明最低版本、不设上限。允许更新宿主，但事件语义和 preset 配置仍需
   重新验收。
@@ -335,8 +327,9 @@ node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-too
 
 ```
 .
-├── lib/plugin.js        宿主侧 guard、block_summary、压缩事务
+├── lib/plugin.js        宿主侧 guard、block_compact、压缩事务
 ├── lib/blocks.js        区块头解析、消息归属与区间规划
+├── lib/prompts.js       区块使用说明与原生工具/schema 提示
 ├── cordis.patch.yml     bundle 补丁：新增一个 preset `block-ptc`
 ├── locale/{en,zh}.json  Harness UI 读取的显示元数据
 ├── tests/logic.test.mjs 逻辑与事务测试

@@ -27,8 +27,8 @@ See the [README](README.md#install) for installation details.
 - Preserve system/developer messages and paired tool calls when replacing history.
   User follow-ups inside the target interval participate in the summary; never
   discard messages arriving after the model wrote that summary.
-- Use the `ids` API while preserving the legacy single-string `id` alias.
-  Peer dependencies express minimum versions
+- Use `block_compact({ ids, content })`; do not add legacy aliases or replay
+  compatibility branches. Peer dependencies express minimum versions
   without upper bounds; check required host capabilities and record live
   compatibility evidence separately from the declared ranges.
 - For behavior changes, add a regression case to `tests/logic.test.mjs` and run

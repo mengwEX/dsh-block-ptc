@@ -6,7 +6,7 @@
 # model may call directly. The dsh-block-ptc row therefore does not register a
 # second transport: it reads the '[block: ids] goal' header from every
 # 'run_code' description, tags the complete message and its results, and adds
-# the program-callable 'block_summary' tool, its rules section, and the guard
+# the program-callable 'block_compact' tool, its rules section, and the guard
 # that requires the header.
 - insert:
     - id: preset-block-ptc
@@ -14,7 +14,7 @@
       config:
         id: block-ptc
         name: Block PTC
-        description: PTC mode where every program runs inside a blackboard block and finished blocks are replaced by a model-written summary.
+        description: PTC mode where every program runs inside a blackboard block and blocks no longer needed for active work are replaced by model-written retained content.
         order: 3
         plugins:
           - id: persona

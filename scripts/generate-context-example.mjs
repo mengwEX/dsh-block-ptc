@@ -75,7 +75,7 @@ function run(compact) {
     session.append('tool/call', { turn: 1, step, callId, name: 'run_code', arguments: argumentsText })
     surface('tool/result', { turn: 1, step, message: {} }, config.toolResultTokens)
     if (compact && step % config.requestsPerBlock === 0) {
-      const closing = session.append('tool/ptc-dispatch-start', { subCallId: `call-${step}:ptc:1`, name: 'block_summary', arguments: { ids: [`task-${block}`], summary: 'Synthetic summary' } })
+      const closing = session.append('tool/ptc-dispatch-start', { subCallId: `call-${step}:ptc:1`, name: 'block_compact', arguments: { ids: [`task-${block}`], content: 'Synthetic summary' } })
       const plan = __internals.planReplacement(session, [`task-${block}`])
       assert.equal(plan.kind, 'replace')
       __internals.commitReplacement(ctx, session, plan, [`task-${block}`], 'Synthetic summary', closing.seq)
