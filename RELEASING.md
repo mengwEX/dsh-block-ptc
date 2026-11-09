@@ -1,14 +1,15 @@
 # 发布指南
 
 仓库：<https://github.com/mengwEX/dsh-block-ptc>。包名与 bundle 中的插件解析名
-统一为 `dsh-block-ptc`。本次发布版本为 `0.4.0`。声明最低 DSH 版本为
-`0.2.1-rc.2`、最低 Cordis 版本为 `4.0.5`，均不设版本上限。
+统一为 `dsh-block-ptc`。本次发布版本为 `0.5.0`。当前最低 DSH 版本为
+`0.2.2-rc.1`、最低 Cordis 版本为 `4.1.0`，均不设版本上限。
 
 包已发布到 [npm](https://www.npmjs.com/package/dsh-block-ptc)，维护账号为
 `mengw.ex`，用户可直接通过 Plugin Manager 按包名安装。`0.3.0` 起区块归属写在
 内置 `run_code` 的描述头里，不再注册单独的传输工具；DSH `0.2.1` 的 PTC 收窄
 规则只允许直接调用 `run_code`。`0.4.0` 起使用 `block_compact({ ids, content })`，
-不提供旧接口兼容。preset 必须在真实宿主里验收，见文末第 4 节。
+不提供旧接口兼容。当前源码使用新版原生 PTC 执行器接口；preset 必须在真实宿主里
+验收，见文末第 4 节。
 
 GitHub Release 与 npm 是两条独立的发布流程。创建 GitHub Release 不会上传 npm，
 仓库 CI 也不持有 npm 凭据或自动执行 `npm publish`。

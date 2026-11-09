@@ -4,7 +4,9 @@
 
 `cordis.patch.yml` adapts the PTC preset from DeepSeek Harness
 (`@deepseek-ai/dsh-web-app/presets/ptc.patch.yml`, compatibility baseline
-`0.2.1-rc.2`). The upstream project is available at
+`0.2.2-rc.1`). The executor entry imports the host-provided
+`@deepseek-ai/dsh-tool-executor-ptc` peer instead of copying its implementation.
+The upstream project is available at
 <https://github.com/deepseek-ai/deepseek-harness>.
 
 The adapted upstream code is distributed under the following MIT license:

@@ -6,26 +6,22 @@
 [![npm version](https://img.shields.io/npm/v/dsh-block-ptc.svg)](https://www.npmjs.com/package/dsh-block-ptc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 **PTC 模式**加「黑板块」。
+为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供 **AI 自主管理上下文的 Auto Compact**。
 
-`0.4.0` 使用 `block_compact({ ids, content })`，不兼容旧的 `block_summary`
-工具及 `summary`/单个 `id` 参数。更新后重启 DSH，并新建 **Block PTC** 会话。
+由正在执行任务的 AI 根据任务进展，自行决定**何时整理上下文、整理哪些区块，以及保留
+哪些信息**，不必等待固定 token 阈值触发。后续执行、回复和讨论仍需使用的信息完整
+保留；不再需要的内容可以概括或省略。
 
-区块协议使用内置 `run_code` 传输层。DSH 的 PTC 呈现只允许直接调用
-`run_code`，所以区块归属写在工具描述的开头：
+区块是这套机制在 PTC 模式下组织相关工作的方式。AI 通过
+`block_compact({ ids, content })` 提交整理后的保留内容，插件替换下一次请求中的
+对应区间。原始消息仍在只追加的会话日志中；宿主原生自动压缩可以继续共存。
 
-```
-run_code({ description: "[block: <ids>] <goal>", code })
-```
+`0.5.0` 适配 DSH `0.2.2-rc.1` 的原生 PTC 执行器接口。先更新 DSH，再更新插件，
+重启后新建 **Block PTC** 会话。调用接口仍是 `block_compact({ ids, content })`。
 
-一个*区块*就是黑板上的一块区域。模型跑的每段程序都会带上区块 id。当区块内容不再
-需要，或相关结果已经汇报且准备转向其他工作时，可以提交**自己整理的保留内容**替换
-区块消息。仍需用于执行、回复或讨论的内容应继续保留。原始消息仍保留在
-只追加的会话日志里，人类看到的对话记录不变，重放也是确定性的。
-
-- DeepSeek Harness **0.2.1-rc.2 或更新**，不设版本上限
+- DeepSeek Harness **0.2.2-rc.1 或更新**，不设版本上限
 - 社区插件，维护者 [mengwEX](https://github.com/mengwEX)
-- **零运行时依赖**：唯一的外部导入是 `node:crypto`
+- **复用原生 PTC 执行**：使用 DSH 提供的执行器
 - 许可证：**MIT**
 
 ## 目录
@@ -45,12 +41,13 @@ run_code({ description: "[block: <ids>] <goal>", code })
 
 ## 为什么做这个
 
-自动压缩在 token 压力上来时压缩历史，它按大小决定压什么，并不知道前四十条消息是
-一个已经完成的子任务、后十条是新任务。
+基于 token 阈值的触发方式知道什么时候空间不足；正在执行任务的 AI 还知道哪些工作
+仍在继续、哪些结果已经汇报，以及下一步需要哪些细节。
 
-这个插件让模型自己划线：开一个区块、在里面干活、用一段交接总结收口——于是保留
-下来的上下文就是模型选择保留的那一段。总结由模型在程序调用里提交，插件不另跑
-一个总结模型。
+这套 Auto Compact 机制让 AI 利用任务进展主动管理上下文：按工作内容组织区块，
+保留执行和讨论仍需使用的材料，在原始内容不再需要，或已汇报的工作结束、准备转向
+其他工作时整理。保留内容由同一个 AI 撰写，不另调用总结模型。宿主原生的阈值压缩
+继续作为独立机制兜底。
 
 ## 上下文与缓存对比
 
@@ -98,13 +95,13 @@ A A B A C B -- compact([A, B]) --> S[C]
 
 ## 安装
 
-要求：DeepSeek Harness `>=0.2.1-rc.2` 及其自带运行时，Cordis `>=4.0.5`。
+要求：DeepSeek Harness `>=0.2.2-rc.1` 及其自带运行时，Cordis `>=4.1.0`。
 两个 peer 范围都没有上限。插件是一个 profile **bundle**：安装后往
 `dsh.profile.bundles` 加一行，并新增一个 agent preset `block-ptc`；不会改动
 自带的 `ptc` preset。
 
-版本范围只说明「允许新宿主加载」，不等于已完成兼容性验收。本版本的实机验收使用
-DSH `0.2.1-rc.2`。DSH 的插件加载器评估 peer 范围时包含预发布版本。插件在挂载前
+版本范围只说明「允许新宿主加载」，不等于已完成兼容性验收。当前离线检查使用正式
+发布的 DSH `0.2.2-rc.1` 包。DSH 的插件加载器评估 peer 范围时包含预发布版本。插件在挂载前
 检查所需的工具/提示词方法，在总结前检查会话方法，缺失时报错。方法存在不等于事件
 语义、preset 配置或模型行为已经验证；宿主变化时仍需要重新验收。
 
@@ -229,8 +226,9 @@ plugin_manager  remove_bundle  dsh-block-ptc
 
 自带 `ptc` preset 加上：
 
-- 与自带 preset 相同的 `tool-presentation.mode: ptc`，因此宿主的 PTC 收窄规则
-  继续生效：只有 `run_code` 可以直接调用；
+- `dsh-block-ptc/executor` 复用宿主的 `PtcExecutor`，通过它的 `describe` 和 SDK
+  说明接口对齐区块头。实际执行、沙箱、嵌套调用和日志均由原生执行器处理；只有
+  `run_code` 可以直接调用；
 - 本插件的行：一条 **guard**，要求每次模型直接调用的 `run_code` 都带
   `[block: <ids>] <goal>` 头（如果收窄规则缺席，也仍然拒绝直接调用其他工具）；
   此外还有区块规则段、原生工具的模型可见说明，以及程序内可调用的 `block_compact`。
@@ -269,9 +267,11 @@ compaction/end          释放锁
 东西。成功的排队结果可重放；`session/event` 观察者在 append 边界之外调度完成。
 不使用第二个持久化存储。
 
-**为什么没有外部导入。** profile bundle 可以以符号链接安装；按裸模块名导入
-`@deepseek-ai/dsh-*` 的插件可能因宿主链接方式而解析失败。插件唯一的外部导入是
-`node:crypto`，归属辅助逻辑用包内的相对模块。
+**执行器归属。** DSH `0.2.2` 把工具 schema 交给执行器提供，
+`system-prompt/assemble` 只处理提示词文本和上下文。独立的执行器入口导入宿主提供
+的 `PtcExecutor` peer，通过正式执行器接口调整呈现，原样转发执行输入和返回的
+Promise。区块逻辑与区间辅助模块使用相对导入。本地 link 的源码必须能解析宿主
+peer；检查正常安装布局时，使用打包后的 bundle。
 
 ## 验证
 
@@ -283,18 +283,21 @@ node tests/logic.test.mjs
 逻辑测试用假的 context 和会话驱动真实的插件入口：区块头解析、工具注册、guard、
 完整的压缩事务、失败后仍释放锁的路径，以及宿主 API 检查。
 
-可选的原生离线检查使用 DSH 已安装的服务：
+可选的原生离线检查使用 DSH 已安装的服务。独立验证环境需在同一目录安装宿主
+peer 和打包后的插件：
 
 ```
 node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-tools/lib/index.js
-node tests/native-prompt.mjs /path/to/dsh-tools/lib/index.js
+node tests/native-prompt.mjs /path/to/dsh-tools/lib/index.js /path/to/installed/dsh-block-ptc/lib/executor.js
+node tests/native-preset.mjs /path/to/dsh-tools/lib/index.js
 ```
 
 Session 检查验证工具 schema、真实事件 append/重放及区间内用户消息替换。提示词
 检查通过真实的 SystemPrompt、Tools 和 Cordis 服务组装首次请求：原生 `run_code`
 的 schema 与 SDK 示例包含区块头，程序 SDK 提供 `block_compact({ ids, content })`，
-宿主原有的程序与运行时说明保持不变。这两项均不调用模型，不验证实时 UI、区块选择、
-整理时机或信息保留质量。
+宿主原有的程序与运行时说明保持不变。预设检查会解析所有模块入口（含禁用行），
+并验证发生变更的预设、执行器和子代理配置。这些检查均不调用模型，不验证实时 UI、
+区块选择、整理时机或信息保留质量。
 
 ## 排障
 
@@ -302,7 +305,7 @@ Session 检查验证工具 schema、真实事件 append/重放及区间内用户
 |---|---|
 | preset 选择器里没有 | bundle 不在 `dsh.profile.bundles`，或宿主还没重新组合。检查 `plugin_manager list_bundles`，然后重启。 |
 | preset 显示损坏 / *"dsh-block-ptc: never started"* | 插件模块导入失败（本地链接安装通常是包解析问题）。修正布局后重启。 |
-| *"invalid config: $.mode expected native \| ptc but got both"* | 旧 `0.2.x` bundle 装在 DSH `0.2.1+` 上。升级到 `0.3.0` 后重启。 |
+| *"ERR_PACKAGE_PATH_NOT_EXPORTED: .../list-agents"* 或 *"assembly.tools ... undefined"* | 新宿主仍在加载旧 bundle。安装更新后的 bundle，重启并新建 Block PTC 会话。 |
 | 会话里没有区块归属 | 会话没跑 `block-ptc` preset，或模型漏了区块头（guard 会拒绝那次调用）。 |
 | 总结报 *"no current content for ids"* | 该 id 没在当前 surface 的 `run_code` 头里出现过。检查拼写；已收口的 id 不再可见。 |
 | 新总结还是旧格式 | 宿主仍在跑旧模块。更新 bundle，完全退出并重开 DSH。历史总结保留原文。 |
@@ -330,6 +333,7 @@ Session 检查验证工具 schema、真实事件 append/重放及区间内用户
 ├── lib/plugin.js        宿主侧 guard、block_compact、压缩事务
 ├── lib/blocks.js        区块头解析、消息归属与区间规划
 ├── lib/prompts.js       区块使用说明与原生工具/schema 提示
+├── lib/executor.js      原生 PTC 执行器适配
 ├── cordis.patch.yml     bundle 补丁：新增一个 preset `block-ptc`
 ├── locale/{en,zh}.json  Harness UI 读取的显示元数据
 ├── tests/logic.test.mjs 逻辑与事务测试

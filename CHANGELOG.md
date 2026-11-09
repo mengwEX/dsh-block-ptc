@@ -4,6 +4,34 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-11-09
+
+### Changed
+
+- Present the plugin as AI-managed Auto Compact: the active agent decides
+  when to organize context and what to retain based on task progress, without
+  waiting for a fixed token threshold. Update package, preset, locale and
+  README descriptions; native automatic compaction continues to coexist.
+
+### Fixed
+
+- Remove the deleted `dsh-tool-subagent-control/list-agents` subpath from the
+  preset; the main control plugin already registers `list_agents`.
+- Use the current subagent `modelSelection` and `modelDiscovery` options.
+- Stop reading or rewriting tool schemas through `system-prompt/assemble`:
+  DSH now keeps tool declarations out of that presentation-only waterfall.
+  Provide block guidance through the supported PTC executor's `describe` and
+  SDK sections, while delegating all execution to the native executor.
+- Add an exported `dsh-block-ptc/executor` entry and native checks for the
+  packaged entry, preset module resolution and current configuration schemas.
+
+### Compatibility
+
+- Require DSH `>=0.2.2-rc.1` and Cordis `>=4.1.0`, with no upper bounds and no
+  legacy API adapters. Update the preset to the current shipped PTC composition.
+- Offline verification uses the published DSH `0.2.2-rc.1` packages; it does not
+  establish live model behavior or desktop UI acceptance.
+
 ## [0.4.0] — 2026-10-21
 
 ### Changed

@@ -4,9 +4,11 @@ Issues and pull requests in English or Chinese are welcome.
 
 ## Development
 
-Use Node.js 22 or newer. The plugin and its tests have no external runtime or
-development dependencies; no install or build step is needed for local checks.
-The peer dependencies are supplied by DeepSeek Harness at runtime.
+Use Node.js 22 or newer. Standalone checks use only Node built-ins;
+no install or build step is needed for `npm run check`.
+The executor entry imports the native PTC executor peer supplied by DeepSeek
+Harness. Optional native checks require host packages and the packed plugin
+in a fixture or host installation; keep that environment outside this checkout.
 
 ```sh
 git clone https://github.com/mengwEX/dsh-block-ptc.git

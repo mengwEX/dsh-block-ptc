@@ -9,7 +9,7 @@ if (!process.argv[2]) throw new Error('Usage: node tests/native-session.mjs /abs
 const { Session } = await import(pathToFileURL(resolve(process.argv[2])).href)
 const defs = new Map()
 const ctx = {
-  tools: { register: (def) => defs.set(def.name, def), guard: () => {}, execute: () => {} },
+  tools: { register: (def) => defs.set(def.name, def), guard: () => {}, setExecutor: () => {} },
   systemPrompt: { section: () => {} }, get: () => undefined, on: () => {},
 }
 apply(ctx)

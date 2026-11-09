@@ -14,7 +14,7 @@
       config:
         id: block-ptc
         name: Block PTC
-        description: PTC mode where every program runs inside a blackboard block and blocks no longer needed for active work are replaced by model-written retained content.
+        description: AI-managed Auto Compact in PTC mode. The agent decides when to organize context and what to retain as work progresses, without waiting for a fixed token threshold.
         order: 3
         plugins:
           - id: persona
@@ -35,6 +35,8 @@
             disabled: !!js process.platform !== 'win32'
           - id: tool-fs
             name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
             config:
@@ -97,14 +99,13 @@
             config:
               - id: tool-subagent-control
                 name: '@deepseek-ai/dsh-tool-subagent-control'
-              - id: tool-subagent-list-agents
-                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
               - id: tool-subagent
                 name: '@deepseek-ai/dsh-tool-subagent'
                 config:
                   provider: spawn
                   toolName: subagent
-                  modelSelectionSettings: true
+                  modelSelection: true
+                  modelDiscovery: true
               - id: tool-subagent-fork
                 name: '@deepseek-ai/dsh-tool-subagent'
                 config:
@@ -131,10 +132,8 @@
               searchTimeoutMs: 60000
           - id: dsh-block-ptc
             name: 'dsh-block-ptc'
-          - id: tool-presentation
-            name: '@deepseek-ai/dsh-agent-tool-presentation'
-            config:
-              mode: ptc
+          - id: tool-executor-ptc
+            name: 'dsh-block-ptc/executor'
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
           - id: tool-plugin-manager

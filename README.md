@@ -6,30 +6,27 @@
 [![npm version](https://img.shields.io/npm/v/dsh-block-ptc.svg)](https://www.npmjs.com/package/dsh-block-ptc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Blackboard blocks for **PTC mode** in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
+**Auto Compact with AI-managed context** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 
-Version `0.4.0` uses `block_compact({ ids, content })`. The old `block_summary`
-tool and `summary`/single `id` arguments are not supported. Restart DSH and
-start a new **Block PTC** session after updating.
+The agent manages its own context as work progresses: it decides **when to
+compact, which blocks to organize, and what information to retain**. It can
+organize context before a fixed token threshold is reached. Information still
+needed for execution, replies or discussion is retained in full; material no
+longer needed can be condensed or omitted.
 
-The block protocol uses the built-in `run_code` transport.
-DSH's PTC presentation allows only `run_code` to be called directly, so the
-model declares blocks in the tool description:
+Blocks are the mechanism for organizing related work in PTC mode. The agent
+submits the retained content through `block_compact({ ids, content })`, and the
+plugin replaces the block interval in its next request. Original messages stay
+in the append-only session log. The host's native automatic compaction can
+continue to run alongside it.
 
-```
-run_code({ description: "[block: <ids>] <goal>", code })
-```
+Version `0.5.0` adapts to DSH `0.2.2-rc.1` and its native PTC executor interface.
+Update DSH first, then update this bundle, restart, and start a new **Block PTC**
+session. The API remains `block_compact({ ids, content })`.
 
-A *block* is a blackboard region. Every program the model runs is tagged with
-block ids. When the content is no longer needed, or its results have already
-been reported and the model is moving to other work, it can submit retained
-content **it writes itself** to replace the block's messages. Information still
-needed for execution, replies or discussion remains available. The original messages stay in the append-only session log, so the
-human transcript keeps everything and replay stays deterministic.
-
-- DeepSeek Harness **0.2.1-rc.2 or newer**; no upper version bound
+- DeepSeek Harness **0.2.2-rc.1 or newer**; no upper version bound
 - Community plugin maintained by [mengwEX](https://github.com/mengwEX)
-- **Zero runtime dependencies** — the only external import is `node:crypto`
+- **Native PTC execution** — reuses the executor supplied by DSH
 - License: **MIT**
 
 ## Table of contents
@@ -49,14 +46,16 @@ human transcript keeps everything and replay stays deterministic.
 
 ## Why
 
-Automatic compaction condenses history when token pressure builds, and it
-decides what to condense by size. It has no idea that the last forty messages
-were one finished sub-task and the next ten are a new one.
+A token-threshold trigger tells a system when space is running low. The agent
+also knows which work is still active, which results have already been
+reported, and which details it will need next.
 
-This plugin lets the model draw that line itself: open a block, work inside it,
-and close it with a handover summary — so the context it keeps is the one it
-chose to keep. The model submits the summary inside its program call; the plugin
-does not run a separate summarizer model.
+This Auto Compact mechanism lets the agent use that task knowledge to manage
+context proactively. It organizes work into blocks, keeps material needed for
+execution and discussion, and compacts earlier material when it is no longer
+needed or when reported work gives way to other work. The same agent writes
+the retained content; no separate summarizer model is called. Native
+threshold-triggered compaction remains available as a separate fallback.
 
 ## Context and cache comparison
 
@@ -111,15 +110,15 @@ instead. In the Web UI the summary renders as a compaction checkpoint node.
 
 ## Install
 
-Requirements: DeepSeek Harness `>=0.2.1-rc.2` and its bundled runtime, with
-Cordis `>=4.0.5`. Neither peer range has an upper version bound. The plugin
+Requirements: DeepSeek Harness `>=0.2.2-rc.1` and its bundled runtime, with
+Cordis `>=4.1.0`. Neither peer range has an upper version bound. The plugin
 is a profile **bundle**: installing it adds one row to `dsh.profile.bundles`
 and one new agent preset, `block-ptc`. It does not modify the shipped `ptc`
 preset.
 
 The version ranges allow newer hosts to load the plugin; they are not a record
-of completed compatibility checks. Live host verification for this release used
-DSH `0.2.1-rc.2`. DSH's plugin loader includes prereleases when evaluating its
+of completed compatibility checks. Current offline checks use the published
+DSH `0.2.2-rc.1` packages. DSH's plugin loader includes prereleases when evaluating its
 peer ranges. The plugin checks the required tool/prompt methods before mounting
 and the session methods before summarizing, and reports missing capabilities.
 Method presence does not verify event semantics, preset configuration or model
@@ -256,8 +255,10 @@ protected messages reject the whole request without removing any memberships.
 
 The shipped `ptc` preset plus:
 
-- the same `tool-presentation.mode: ptc` as the shipped preset, so the host's
-  own PTC collapse remains in force: only `run_code` may be called directly;
+- `dsh-block-ptc/executor`, which uses the shipped `PtcExecutor` and adapts
+  its `describe` output and SDK guidance for block headers. The native executor
+  handles execution, sandboxing, nested calls and logging; only `run_code`
+  may be called directly;
 - this plugin's row, which adds a **guard** that requires the
   `[block: <ids>] <goal>` header on every model-direct `run_code` call (and
   still rejects a direct call to any other tool if the collapse is absent),
@@ -306,10 +307,13 @@ sequence in `source.blockPtc`. A summary attempt alone closes nothing. Successfu
 queued outcomes are replayable; a `session/event` observer schedules completion
 outside the append boundary. No second persistence store is used.
 
-**Why the plugin has no external imports.** Profile bundles can be installed as
-symlinks; a plugin that imports `@deepseek-ai/dsh-*` by bare specifier can fail
-to resolve depending on how the host links it. Its only external import is
-`node:crypto`; membership helpers use a bundled relative module.
+**Executor ownership.** DSH `0.2.2` makes tool schemas provider-owned; the
+`system-prompt/assemble` waterfall only transforms prompt text and contexts.
+The separate executor entry imports the host's `PtcExecutor` peer and adapts
+its presentation through the supported executor interface. It forwards the
+original execution input and promise to the native executor. The block logic
+and interval helpers use relative imports. A linked checkout must have its
+host peers resolvable; install a packed bundle to check normal package layout.
 
 ## Verification
 
@@ -323,11 +327,13 @@ sessions: header parsing, tool registration, the guard, the whole compaction
 transaction, the failure path that still releases the lock, and the host-API
 checks.
 
-The optional native checks use DSH's installed services:
+The optional native checks use DSH's installed services. For an isolated fixture,
+install the host peers and the packed plugin in the same fixture directory:
 
 ```
 node tests/native-session.mjs /path/to/dsh-session/lib/index.js /path/to/dsh-tools/lib/index.js
-node tests/native-prompt.mjs /path/to/dsh-tools/lib/index.js
+node tests/native-prompt.mjs /path/to/dsh-tools/lib/index.js /path/to/installed/dsh-block-ptc/lib/executor.js
+node tests/native-preset.mjs /path/to/dsh-tools/lib/index.js
 ```
 
 The Session check verifies tool schema support, native append/replay and
@@ -335,7 +341,9 @@ intervening user-message replacement. The prompt check assembles the initial
 request through real SystemPrompt, Tools and Cordis services: the native
 `run_code` schema and SDK examples carry the block header, the program SDK
 exposes `block_compact({ ids, content })`, and native code/runtime instructions
-are preserved. Both checks are offline; they do not run a model or validate
+are preserved. The preset check resolves all module paths, including disabled
+rows, and validates the changed preset/executor/subagent configurations. These
+checks are offline; they do not run a model or validate
 live UI rendering, block selection, compaction timing or information retention.
 
 ## Troubleshooting
@@ -344,7 +352,7 @@ live UI rendering, block selection, compaction timing or information retention.
 |---|---|
 | The preset is missing from the picker | The bundle is not in `dsh.profile.bundles`, or the host has not recomposed. Check `plugin_manager list_bundles`, then restart. |
 | The preset shows as broken / *"dsh-block-ptc: never started"* | The plugin module failed to import (usually a package-resolution problem for a linked checkout). Fix the layout, then restart. |
-| *"invalid config: $.mode expected native \| ptc but got both"* | An older `0.2.x` bundle is installed against DSH `0.2.1+`. Update to `0.3.0` and restart. |
+| *"ERR_PACKAGE_PATH_NOT_EXPORTED: .../list-agents"* or *"assembly.tools ... undefined"* | An old bundle is running on the new host. Install the updated bundle, restart, and create a new Block PTC session. |
 | No block tagging in a session | The session is not running the `block-ptc` preset, or the model omitted the header (the guard refuses that call). |
 | Summary says *"no current content for ids"* | The id never appeared in a `run_code` header in the current surface. Check the header spelling; already summarized ids are closed. |
 | New summaries still use the old framing | The host is running an old module generation. Update the bundle and fully quit/reopen DSH. Existing historical summaries keep their original text. |
@@ -375,6 +383,7 @@ live UI rendering, block selection, compaction timing or information retention.
 ├── lib/plugin.js        host-side guard, block_compact, transactions
 ├── lib/blocks.js        header parsing, message memberships and interval planning
 ├── lib/prompts.js       block usage and native tool/schema guidance
+├── lib/executor.js      supported native PTC executor adapter
 ├── cordis.patch.yml     the bundle patch: one new preset, `block-ptc`
 ├── locale/{en,zh}.json  display metadata read by the Harness UI
 ├── tests/logic.test.mjs the logic and transaction tests

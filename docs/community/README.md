@@ -31,5 +31,5 @@ The npm mapping is collected from registry metadata; no `npm` key is added.
 目录收录 [PR #7555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7555)
 已于 2026-10-17 合并。各市场的同步时间取决于其目录工作流。
 
-Release: [v0.3.0](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.3.0).
+Release: [v0.5.0](https://github.com/mengwEX/dsh-block-ptc/releases/tag/v0.5.0).
 Package: [dsh-block-ptc on npm](https://www.npmjs.com/package/dsh-block-ptc).

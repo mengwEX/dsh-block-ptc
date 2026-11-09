@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "dsh-block-ptc",
-    "description": "Blackboard blocks for PTC mode: tag programs with block ids and compact context no longer needed for active work, retaining details needed later."
+    "description": "AI-managed Auto Compact: the agent decides when to organize context and what information to retain as work progresses, without waiting for a fixed token threshold."
   }
 }

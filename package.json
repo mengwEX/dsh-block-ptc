@@ -1,7 +1,7 @@
 {
   "name": "dsh-block-ptc",
-  "version": "0.4.0",
-  "description": "Blackboard blocks for DeepSeek Harness PTC mode: tag run_code with block ids and use block_compact to organize inactive context while retaining information needed for subsequent work.",
+  "version": "0.5.0",
+  "description": "AI-managed Auto Compact for DeepSeek Harness: the agent decides when to compact context and what to retain as work progresses, without waiting for a fixed token threshold.",
   "type": "module",
   "license": "MIT",
   "author": "WangMeng <mengw.ex@gmail.com> (https://github.com/mengwEX)",
@@ -24,13 +24,16 @@
     "ptc",
     "context",
     "compaction",
-    "agent"
+    "agent",
+    "auto-compact",
+    "context-management"
   ],
   "main": "lib/plugin.js",
   "exports": {
     ".": "./lib/plugin.js",
     "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json"
+    "./locale/*.json": "./locale/*.json",
+    "./executor": "./lib/executor.js"
   },
   "files": [
     "lib/*.js",
@@ -49,14 +52,16 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": ">=4.0.5",
-    "@deepseek-ai/dsh-agent": ">=0.2.1-rc.2",
-    "@deepseek-ai/dsh-llm": ">=0.2.1-rc.2",
-    "@deepseek-ai/dsh-session": ">=0.2.1-rc.2",
-    "@deepseek-ai/dsh-tools": ">=0.2.1-rc.2"
+    "@deepseek-ai/cordis": ">=4.1.0",
+    "@deepseek-ai/dsh-agent": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-llm": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-session": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-tools": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-tool-executor-ptc": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-system-prompt": ">=0.2.2-rc.1"
   },
   "scripts": {
     "test": "node tests/logic.test.mjs",
-    "check": "node --check lib/plugin.js && node --check lib/blocks.js && node --check lib/prompts.js && node --check tests/logic.test.mjs && node --check tests/native-session.mjs && node --check tests/native-prompt.mjs && npm test"
+    "check": "node --check lib/plugin.js && node --check lib/executor.js && node --check lib/blocks.js && node --check lib/prompts.js && node --check tests/logic.test.mjs && node --check tests/native-session.mjs && node --check tests/native-prompt.mjs && node --check tests/native-preset.mjs && npm test"
   }
 }

@@ -2,25 +2,23 @@
 import assert from 'node:assert/strict'
 import { apply, __internals as core } from '../lib/plugin.js'
 import { summaryMetadata } from '../lib/blocks.js'
-import { HEADER_GUIDANCE } from '../lib/prompts.js'
+import { HEADER_GUIDANCE, createBlockExecutor } from '../lib/prompts.js'
 
 function harness() {
-  const defs = new Map(), guards = [], sections = [], listeners = [], assemblyHooks = []
+  const defs = new Map(), guards = [], sections = [], listeners = []
   const ctx = {
     tools: {
       register: (def) => defs.set(def.name, def),
       guard: (guard) => guards.push(guard),
+      setExecutor: () => {},
     },
     systemPrompt: { section: (section) => sections.push(section) },
     get: () => ({ estimateMessage: () => 10 }),
-    on: (name, fn) => {
-      if (name === 'session/event') listeners.push(fn)
-      else { assert.equal(name, 'system-prompt/assemble'); assemblyHooks.push(fn) }
-    },
+    on: (name, fn) => { assert.equal(name, 'session/event'); listeners.push(fn) },
     logger: { warn: () => {} },
   }
   apply(ctx)
-  return { ctx, defs, guards, sections, listeners, assemblyHooks }
+  return { ctx, defs, guards, sections, listeners }
 }
 const host = harness()
 const drain = async () => { await new Promise((resolve) => queueMicrotask(resolve)) }
@@ -345,34 +343,41 @@ function outcome(session, step, ids, value, isError = false, content = 'handover
   await assert.rejects(compact({ surface: { nodes: [] } }, ['A']), /incompatible DSH session API/)
 }
 
-// The first assembled request must teach the same header the execution guard requires.
+// The executor owns both the model-facing schemas and SDK guidance.
 {
   const transport = {
     name: 'run_code', description: 'Execute a program.',
     parameters: { type: 'object', required: ['code', 'description'], properties: {
       code: { type: 'string', description: 'Keep the native runtime instructions.' },
-      description: { type: 'string', description: 'A short description, e.g. Show current directory.' },
+      description: { type: 'string', description: 'Show current directory.' },
       timeoutMs: { type: 'number' },
     } },
   }
-  const assembly = {
-    sections: [host.sections[0], { name: 'tools:sdk', text:
-      '## Writing code for run_code\n\n`run_code({ code: "return await tools.bash({ command: \'pwd\', description: \'Show current directory\' })", description: "Show current directory" })`\n\ndeclare const tools: { bash(args: { description: string }): Promise<unknown> }' }],
-    tools: [transport, { name: 'another-tool', parameters: {} }], contexts: [], variables: {},
+  const sections = [{ name: 'tools:ptc-only', text: 'Only run_code is direct.' }, { name: 'tools:sdk', text: (definitions) =>
+    '`run_code({ description: "Show current directory", code: "return 1" })`\n' + JSON.stringify(definitions) }]
+  const definitions = [{ name: 'example', parameters: {} }]
+  const input = { calls: [], signal: new AbortController().signal }
+  const result = Promise.resolve({ results: [] })
+  const native = {
+    sections,
+    describe(value) { assert.equal(this, native); assert.equal(value, definitions); return { schemas: [transport], knownNames: ['run_code'] } },
+    execute(value) { assert.equal(this, native); assert.equal(value, input); return result },
   }
-  const before = structuredClone(assembly)
-  const assembled = await host.assemblyHooks[0](null, {}, async () => assembly)
-  assert.deepEqual(assembly, before, 'native registrations must not be mutated')
-  assert.equal(assembled.tools[0].parameters.properties.description.description, HEADER_GUIDANCE)
-  assert.match(assembled.tools[0].description, /including the first/)
-  assert.deepEqual(assembled.tools[0].parameters.properties.code, transport.parameters.properties.code)
-  assert.deepEqual(assembled.tools[0].parameters.properties.timeoutMs, transport.parameters.properties.timeoutMs)
-  assert.equal(assembled.tools[1], assembly.tools[1])
-  assert.match(assembled.sections[1].text, /description: "\[block: <ids>\] <goal>"/)
-  assert(!assembled.sections[1].text.includes('description: "Show current directory"'))
-  assert(assembled.sections[1].text.includes('declare const tools: { bash(args: { description: string }): Promise<unknown> }'))
-  const ordinary = { ...assembly, sections: [assembly.sections[1]] }
-  assert.equal(await host.assemblyHooks[0](null, {}, async () => ordinary), ordinary)
+  const before = structuredClone(transport)
+  const executor = createBlockExecutor(native)
+  const view = executor.describe(definitions)
+  assert.deepEqual(transport, before, 'native registrations must not be mutated')
+  assert.deepEqual(view.knownNames, ['run_code'])
+  assert.equal(view.schemas[0].parameters.properties.description.description, HEADER_GUIDANCE)
+  assert.match(view.schemas[0].description, /including the first/)
+  assert.deepEqual(view.schemas[0].parameters.properties.code, transport.parameters.properties.code)
+  assert.deepEqual(view.schemas[0].parameters.properties.timeoutMs, transport.parameters.properties.timeoutMs)
+  assert.equal(executor.sections[0], sections[0])
+  const sdk = executor.sections[1].text(definitions)
+  assert.match(sdk, /description: "\[block: <ids>\] <goal>"/)
+  assert(!sdk.includes('description: "Show current directory"'))
+  assert(sdk.includes(JSON.stringify(definitions)), 'SDK declarations must not be changed')
+  assert.equal(executor.execute(input), result, 'delegate the same input and promise to the native executor')
 }
 await drain()
 console.log('dsh-block-ptc logic test: OK')

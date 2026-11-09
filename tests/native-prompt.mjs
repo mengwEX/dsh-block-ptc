@@ -2,14 +2,17 @@
 import assert from 'node:assert/strict'
 import { pathToFileURL } from 'node:url'
 import { resolve } from 'node:path'
+import { createRequire } from 'node:module'
 import * as plugin from '../lib/plugin.js'
 import { HEADER_GUIDANCE } from '../lib/prompts.js'
 
-if (!process.argv[2]) throw new Error('Usage: node tests/native-prompt.mjs /absolute/path/to/dsh-tools/lib/index.js')
+if (!process.argv[2]) throw new Error('Usage: node tests/native-prompt.mjs /absolute/path/to/dsh-tools/lib/index.js [installed-block-executor.js]')
 const toolsUrl = pathToFileURL(resolve(process.argv[2]))
+const blockExecutorUrl = pathToFileURL(process.argv[3] === undefined
+  ? createRequire(toolsUrl).resolve('dsh-block-ptc/executor') : resolve(process.argv[3]))
 const load = (name) => import(new URL(`../../${name}/lib/index.js`, toolsUrl).href)
-const [{ Context }, { default: SystemPrompt }, { default: Tools }, { PtcRuntime }] = await Promise.all([
-  load('cordis'), load('dsh-system-prompt'), import(toolsUrl.href), load('dsh-ptc-runtime'),
+const [{ Context }, { default: SystemPrompt }, { default: Tools }, { PtcRuntime }, PtcExecutor] = await Promise.all([
+  load('cordis'), load('dsh-system-prompt'), import(toolsUrl.href), load('dsh-ptc-runtime'), load('dsh-tool-executor-ptc'),
 ])
 
 class OfflineRuntime extends PtcRuntime {
@@ -21,7 +24,8 @@ class OfflineRuntime extends PtcRuntime {
 const ctx = new Context()
 await ctx.plugin(SystemPrompt)
 await ctx.plugin(OfflineRuntime)
-await ctx.plugin(Tools, { mode: 'ptc' })
+await ctx.plugin(Tools)
+const ordinary = await ctx.plugin(PtcExecutor)
 // Make the native SDK emit its real outer run_code example with nested descriptions.
 ctx.tools.register({
   name: 'bash', description: 'Run a command.',
@@ -33,6 +37,8 @@ ctx.tools.register({
 })
 const original = await ctx.systemPrompt.assemble()
 assert(original.sections.find((section) => section.name === 'tools:sdk').text.includes('description: "Show current directory"'))
+await ordinary.dispose()
+await ctx.plugin(await import(blockExecutorUrl.href))
 await ctx.plugin(plugin)
 const assembled = await ctx.systemPrompt.assemble()
 assert.deepEqual(assembled.tools.map((tool) => tool.name), ['run_code'])
